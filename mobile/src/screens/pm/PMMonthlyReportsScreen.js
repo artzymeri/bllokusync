@@ -175,7 +175,7 @@ const PMMonthlyReportsScreen = ({ navigation }) => {
       onRequestClose={() => setFilterModalVisible(false)}
     >
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
+        <View style={[styles.modalContent, styles.filterModal]}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Filtro Raportet</Text>
             <TouchableOpacity onPress={() => setFilterModalVisible(false)}>
@@ -183,7 +183,10 @@ const PMMonthlyReportsScreen = ({ navigation }) => {
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.modalBody}>
+          <ScrollView 
+            style={styles.modalBody}
+            showsVerticalScrollIndicator={true}
+          >
             {/* Property Filter */}
             <View style={styles.filterSection}>
               <Text style={styles.filterLabel}>Prona</Text>
@@ -526,7 +529,7 @@ const PMMonthlyReportsScreen = ({ navigation }) => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Raportet Mujore</Text>
+          <Text style={styles.title}></Text>
           <TouchableOpacity
             style={styles.filterButton}
             onPress={() => setFilterModalVisible(true)}
@@ -822,6 +825,10 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: '80%',
+  },
+  filterModal: {
+    maxHeight: '85%',
+    height: '85%',
   },
   reportDetailModal: {
     maxHeight: '95%',
