@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,42 +6,75 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { apiFetch } from '../../services/api-client';
 
-const PMDashboardScreen = () => {
-  const [refreshing, setRefreshing] = React.useState(false);
+const PMDashboardScreen = ({ navigation, user }) => {
+  const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setError(null);
+      const response = await apiFetch('/api/property-manager-dashboard');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch dashboard data');
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setDashboardData(data.data);
+      } else {
+        throw new Error(data.message || 'Failed to load dashboard data');
+      }
+    } catch (err) {
+      console.error('Dashboard fetch error:', err);
+      setError(err.message);
+      Alert.alert('Gabim', 'Nuk mund të ngarkohen të dhënat e panelit.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
-    // TODO: Fetch dashboard data
-    setTimeout(() => setRefreshing(false), 2000);
+    fetchDashboardData();
   }, []);
 
-  const StatCard = ({ icon, title, value, color }) => (
-    <View style={[styles.statCard, { borderLeftColor: color }]}>
-      <View style={[styles.iconContainer, { backgroundColor: color + '20' }]}>
-        <Ionicons name={icon} size={24} color={color} />
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#4f46e5" />
+        <Text style={styles.loadingText}>Duke ngarkuar...</Text>
       </View>
-      <View style={styles.statContent}>
-        <Text style={styles.statTitle}>{title}</Text>
-        <Text style={styles.statValue}>{value}</Text>
-      </View>
-    </View>
-  );
+    );
+  }
 
-  const QuickActionCard = ({ icon, title, subtitle, onPress }) => (
-    <TouchableOpacity style={styles.actionCard} onPress={onPress}>
-      <View style={styles.actionIcon}>
-        <Ionicons name={icon} size={28} color="#4f46e5" />
+  if (error || !dashboardData) {
+    return (
+      <View style={styles.errorContainer}>
+        <Ionicons name="alert-circle-outline" size={48} color="#ef4444" />
+        <Text style={styles.errorText}>Gabim në ngarkim</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={fetchDashboardData}>
+          <Text style={styles.retryButtonText}>Provo Përsëri</Text>
+        </TouchableOpacity>
       </View>
-      <View style={styles.actionContent}>
-        <Text style={styles.actionTitle}>{title}</Text>
-        {subtitle && <Text style={styles.actionSubtitle}>{subtitle}</Text>}
-      </View>
-      <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
-    </TouchableOpacity>
-  );
+    );
+  }
+
+  const { overview, payments, reports, complaints, suggestions } = dashboardData;
 
   return (
     <ScrollView
@@ -51,76 +84,212 @@ const PMDashboardScreen = () => {
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
-      {/* Welcome Section */}
-      <View style={styles.welcomeSection}>
-        <Text style={styles.welcomeText}>Mirë se vini në</Text>
-        <Text style={styles.welcomeTitle}>Panelin e Menaxherit</Text>
+      {/* Welcome Header */}
+      <View style={styles.welcomeCard}>
+        <Text style={styles.greeting}>Mirë se vini</Text>
+        {user && (
+          <Text style={styles.userName}>{user.name} {user.surname}</Text>
+        )}
       </View>
 
-      {/* Stats Overview */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Përmbledhje</Text>
-        <View style={styles.statsGrid}>
-          <StatCard
-            icon="business"
-            title="Pronat"
-            value="0"
-            color="#3b82f6"
-          />
-          <StatCard
-            icon="people"
-            title="Banorët"
-            value="0"
-            color="#10b981"
-          />
-          <StatCard
-            icon="home"
-            title="Apartamentet"
-            value="0"
-            color="#8b5cf6"
-          />
-          <StatCard
-            icon="cash"
-            title="Pagesat"
-            value="€0"
-            color="#f59e0b"
-          />
+      {/* Main Stats */}
+      <View style={styles.statsContainer}>
+        <View style={styles.statBox}>
+          <View style={styles.statIconWrapper}>
+            <Ionicons name="business" size={24} color="#4f46e5" />
+          </View>
+          <Text style={styles.statValue}>{overview.totalProperties}</Text>
+          <Text style={styles.statLabel}>Pronat</Text>
+        </View>
+
+        <View style={styles.statBox}>
+          <View style={styles.statIconWrapper}>
+            <Ionicons name="people" size={24} color="#10b981" />
+          </View>
+          <Text style={styles.statValue}>{overview.totalTenants}</Text>
+          <Text style={styles.statLabel}>Banorët</Text>
+        </View>
+
+        <View style={styles.statBox}>
+          <View style={styles.statIconWrapper}>
+            <Ionicons name="home" size={24} color="#8b5cf6" />
+          </View>
+          <Text style={styles.statValue}>{overview.totalApartments}</Text>
+          <Text style={styles.statLabel}>Apartamentet</Text>
         </View>
       </View>
+
+      {/* Revenue Card */}
+      <View style={styles.revenueCard}>
+        <View style={styles.revenueHeader}>
+          <View>
+            <Text style={styles.revenueLabel}>Të Ardhurat e Muajit</Text>
+            <Text style={styles.revenueAmount}>€{payments.currentMonth.revenue.toLocaleString()}</Text>
+          </View>
+          <View style={styles.collectionBadge}>
+            <Text style={styles.collectionText}>{payments.currentMonth.collectionRate}%</Text>
+          </View>
+        </View>
+        
+        <View style={styles.paymentBreakdown}>
+          <View style={styles.paymentItem}>
+            <View style={[styles.paymentDot, { backgroundColor: '#10b981' }]} />
+            <Text style={styles.paymentLabel}>Paguar: </Text>
+            <Text style={styles.paymentValue}>{payments.currentMonth.paid}</Text>
+          </View>
+          <View style={styles.paymentItem}>
+            <View style={[styles.paymentDot, { backgroundColor: '#ef4444' }]} />
+            <Text style={styles.paymentLabel}>Papaguar: </Text>
+            <Text style={styles.paymentValue}>{payments.currentMonth.unpaid}</Text>
+          </View>
+          {payments.overdue.length > 0 && (
+            <View style={styles.paymentItem}>
+              <View style={[styles.paymentDot, { backgroundColor: '#f59e0b' }]} />
+              <Text style={styles.paymentLabel}>Të vonuara: </Text>
+              <Text style={styles.paymentValue}>{payments.overdue.length}</Text>
+            </View>
+          )}
+        </View>
+      </View>
+
+      {/* Alerts Section - Only show if there are urgent items */}
+      {(payments.overdue.length > 0 || reports.statistics.pending > 0 || complaints.statistics.pending > 0) && (
+        <View style={styles.alertsCard}>
+          <View style={styles.alertsHeader}>
+            <Ionicons name="notifications" size={20} color="#ef4444" />
+            <Text style={styles.alertsTitle}>Vëmendje e Nevojshme</Text>
+          </View>
+          
+          {payments.overdue.length > 0 && (
+            <TouchableOpacity 
+              style={styles.alertItem}
+              onPress={() => navigation?.navigate && navigation.navigate('payments')}
+            >
+              <View style={styles.alertContent}>
+                <Ionicons name="alert-circle" size={20} color="#ef4444" />
+                <Text style={styles.alertText}>Pagesa të vonuara</Text>
+              </View>
+              <View style={styles.alertBadge}>
+                <Text style={styles.alertBadgeText}>{payments.overdue.length}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+
+          {reports.statistics.pending > 0 && (
+            <TouchableOpacity 
+              style={styles.alertItem}
+              onPress={() => navigation?.navigate && navigation.navigate('reports')}
+            >
+              <View style={styles.alertContent}>
+                <Ionicons name="construct" size={20} color="#f59e0b" />
+                <Text style={styles.alertText}>Raporte në pritje</Text>
+              </View>
+              <View style={styles.alertBadge}>
+                <Text style={styles.alertBadgeText}>{reports.statistics.pending}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+
+          {complaints.statistics.pending > 0 && (
+            <TouchableOpacity 
+              style={styles.alertItem}
+              onPress={() => navigation?.navigate && navigation.navigate('complaints')}
+            >
+              <View style={styles.alertContent}>
+                <Ionicons name="chatbox-ellipses" size={20} color="#f59e0b" />
+                <Text style={styles.alertText}>Ankesa të reja</Text>
+              </View>
+              <View style={styles.alertBadge}>
+                <Text style={styles.alertBadgeText}>{complaints.statistics.pending}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
 
       {/* Quick Actions */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Veprime të Shpejta</Text>
-        <View style={styles.actionsList}>
-          <QuickActionCard
-            icon="business-outline"
-            title="Shiko Pronat"
-            subtitle="Menaxho të gjitha pronat"
-          />
-          <QuickActionCard
-            icon="people-outline"
-            title="Shiko Banorët"
-            subtitle="Menaxho banorët"
-          />
-          <QuickActionCard
-            icon="cash-outline"
-            title="Pagesat"
-            subtitle="Shiko pagesat dhe historinë"
-          />
-          <QuickActionCard
-            icon="document-text-outline"
-            title="Raportet"
-            subtitle="Shiko raportet e banorëve"
-          />
-        </View>
-      </View>
+      <View style={styles.actionsSection}>
+        <Text style={styles.sectionTitle}>Veprime</Text>
+        
+        <View style={styles.actionsGrid}>
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={() => navigation?.navigate && navigation.navigate('properties')}
+          >
+            <Ionicons name="business-outline" size={28} color="#4f46e5" />
+            <Text style={styles.actionText}>Pronat</Text>
+          </TouchableOpacity>
 
-      {/* Recent Activity */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Aktiviteti i Fundit</Text>
-        <View style={styles.activityCard}>
-          <Ionicons name="time-outline" size={48} color="#cbd5e1" />
-          <Text style={styles.emptyText}>Asnjë aktivitet i fundit</Text>
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={() => navigation?.navigate && navigation.navigate('tenants')}
+          >
+            <Ionicons name="people-outline" size={28} color="#4f46e5" />
+            <Text style={styles.actionText}>Banorët</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={() => navigation?.navigate && navigation.navigate('payments')}
+          >
+            <Ionicons name="cash-outline" size={28} color="#4f46e5" />
+            <Text style={styles.actionText}>Pagesat</Text>
+            {payments.overdue.length > 0 && (
+              <View style={styles.actionBadge}>
+                <Text style={styles.actionBadgeText}>{payments.overdue.length}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={() => navigation?.navigate && navigation.navigate('reports')}
+          >
+            <Ionicons name="construct-outline" size={28} color="#4f46e5" />
+            <Text style={styles.actionText}>Mirëmbajtja</Text>
+            {reports.statistics.pending > 0 && (
+              <View style={styles.actionBadge}>
+                <Text style={styles.actionBadgeText}>{reports.statistics.pending}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={() => navigation?.navigate && navigation.navigate('complaints')}
+          >
+            <Ionicons name="chatbox-outline" size={28} color="#4f46e5" />
+            <Text style={styles.actionText}>Ankesat</Text>
+            {complaints.statistics.pending > 0 && (
+              <View style={styles.actionBadge}>
+                <Text style={styles.actionBadgeText}>{complaints.statistics.pending}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={() => navigation?.navigate && navigation.navigate('suggestions')}
+          >
+            <Ionicons name="bulb-outline" size={28} color="#4f46e5" />
+            <Text style={styles.actionText}>Sugjerimet</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={() => navigation?.navigate && navigation.navigate('monthly-reports')}
+          >
+            <Ionicons name="bar-chart-outline" size={28} color="#4f46e5" />
+            <Text style={styles.actionText}>Raportet</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={() => navigation?.navigate && navigation.navigate('configurations')}
+          >
+            <Ionicons name="settings-outline" size={28} color="#4f46e5" />
+            <Text style={styles.actionText}>Konfigurimet</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </ScrollView>
@@ -134,30 +303,223 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: 16,
+    paddingBottom: 32,
   },
-  welcomeSection: {
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#64748b',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+    padding: 20,
+  },
+  errorText: {
+    marginTop: 12,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1e293b',
+    marginBottom: 20,
+  },
+  retryButton: {
+    backgroundColor: '#4f46e5',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  welcomeCard: {
     backgroundColor: '#fff',
     padding: 20,
-    borderRadius: 16,
-    marginBottom: 20,
-    elevation: 2,
+    borderRadius: 12,
+    marginBottom: 16,
+    elevation: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.05,
     shadowRadius: 2,
   },
-  welcomeText: {
+  greeting: {
     fontSize: 14,
     color: '#64748b',
     marginBottom: 4,
   },
-  welcomeTitle: {
-    fontSize: 24,
+  userName: {
+    fontSize: 22,
     fontWeight: '700',
     color: '#1e293b',
   },
-  section: {
-    marginBottom: 24,
+  statsContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+  },
+  statBox: {
+    flex: 1,
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  statIconWrapper: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#f8fafc',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1e293b',
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#64748b',
+    textAlign: 'center',
+  },
+  revenueCard: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 16,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  revenueHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  revenueLabel: {
+    fontSize: 14,
+    color: '#64748b',
+    marginBottom: 4,
+  },
+  revenueAmount: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#10b981',
+  },
+  collectionBadge: {
+    backgroundColor: '#d1fae5',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  collectionText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#065f46',
+  },
+  paymentBreakdown: {
+    gap: 8,
+  },
+  paymentItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  paymentDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 8,
+  },
+  paymentLabel: {
+    fontSize: 14,
+    color: '#64748b',
+  },
+  paymentValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1e293b',
+  },
+  alertsCard: {
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#fee2e2',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  alertsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  alertsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ef4444',
+  },
+  alertItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+  },
+  alertContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  alertText: {
+    fontSize: 14,
+    color: '#1e293b',
+    fontWeight: '500',
+  },
+  alertBadge: {
+    backgroundColor: '#ef4444',
+    minWidth: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+  },
+  alertBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  actionsSection: {
+    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 18,
@@ -165,100 +527,47 @@ const styles = StyleSheet.create({
     color: '#1e293b',
     marginBottom: 12,
   },
-  statsGrid: {
+  actionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 12,
   },
-  statCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  actionButton: {
+    width: '48%',
     backgroundColor: '#fff',
-    padding: 16,
+    padding: 20,
     borderRadius: 12,
-    borderLeftWidth: 4,
-    elevation: 2,
+    alignItems: 'center',
+    elevation: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.05,
     shadowRadius: 2,
-    marginBottom: 12,
+    position: 'relative',
   },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  statContent: {
-    flex: 1,
-  },
-  statTitle: {
+  actionText: {
     fontSize: 14,
-    color: '#64748b',
-    marginBottom: 4,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1e293b',
-  },
-  actionsList: {
-    gap: 12,
-  },
-  actionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    marginBottom: 12,
-  },
-  actionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#eef2ff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  actionContent: {
-    flex: 1,
-  },
-  actionTitle: {
-    fontSize: 16,
     fontWeight: '600',
     color: '#1e293b',
-    marginBottom: 2,
+    marginTop: 8,
   },
-  actionSubtitle: {
-    fontSize: 13,
-    color: '#64748b',
-  },
-  activityCard: {
-    backgroundColor: '#fff',
-    padding: 40,
-    borderRadius: 12,
+  actionBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: '#ef4444',
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    paddingHorizontal: 6,
   },
-  emptyText: {
-    fontSize: 14,
-    color: '#94a3b8',
-    marginTop: 12,
+  actionBadgeText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '700',
   },
 });
 
 export default PMDashboardScreen;
-

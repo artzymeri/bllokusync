@@ -11,15 +11,6 @@
             </PendingDiffInfo>
           </value>
         </entry>
-        <entry key="$PROJECT_DIR$/backend/routes/property.routes.js">
-          <value>
-            <PendingDiffInfo>
-              <option name="filePath" value="$PROJECT_DIR$/backend/routes/property.routes.js" />
-              <option name="originalContent" value="const express = require('express');&#10;const router = express.Router();&#10;const propertyController = require('../controllers/property.controller');&#10;const { verifyToken, isAdmin, isAdminOrPropertyManager } = require('../middleware/auth.middleware');&#10;&#10;// All routes require authentication&#10;router.use(verifyToken);&#10;&#10;// Get managers (property_manager users) for dropdown - MUST be before /:id route&#10;router.get('/managers/list', isAdmin, propertyController.getManagers);&#10;&#10;// Get all properties&#10;router.get('/', propertyController.getAllProperties);&#10;&#10;// Get single property by ID&#10;router.get('/:id', propertyController.getPropertyById);&#10;&#10;// Create property (admin or property_manager can create)&#10;router.post('/', isAdminOrPropertyManager, propertyController.createProperty);&#10;&#10;// Update property (admin only)&#10;router.put('/:id', isAdmin, propertyController.updateProperty);&#10;&#10;// Delete property (admin only)&#10;router.delete('/:id', isAdmin, propertyController.deleteProperty);&#10;&#10;module.exports = router;&#10;" />
-              <option name="updatedContent" value="const express = require('express');&#10;const router = express.Router();&#10;const propertyController = require('../controllers/property.controller');&#10;const { verifyToken, isAdmin, isAdminOrPropertyManager } = require('../middleware/auth.middleware');&#10;&#10;// All routes require authentication&#10;router.use(verifyToken);&#10;&#10;// Get managers (property_manager users) for dropdown - MUST be before /:id route&#10;router.get('/managers/list', isAdmin, propertyController.getManagers);&#10;&#10;// Get all properties&#10;router.get('/', propertyController.getAllProperties);&#10;&#10;// Get single property by ID&#10;router.get('/:id', propertyController.getPropertyById);&#10;&#10;// Create property (admin or property_manager can create)&#10;router.post('/', isAdminOrPropertyManager, propertyController.createProperty);&#10;&#10;// Update property (admin only)&#10;router.put('/:id', isAdmin, propertyController.updateProperty);&#10;&#10;// Delete property (admin or assigned property_manager)&#10;router.delete('/:id', isAdminOrPropertyManager, propertyController.deleteProperty);&#10;&#10;module.exports = router;" />
-            </PendingDiffInfo>
-          </value>
-        </entry>
       </map>
     </option>
   </component>

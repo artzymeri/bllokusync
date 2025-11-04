@@ -438,7 +438,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: 40,
-    marginTop: 20,
+    marginTop: 0,
   },
   logoContainer: {
     marginBottom: 32,
