@@ -35,11 +35,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isAuthenticated = !!user;
 
   const checkAuth = useCallback(async (): Promise<boolean> => {
-    // Skip check if login is in progress
-    if (isLoginInProgress.current) {
-      return true;
-    }
-
     try {
       const isValid = await authAPI.verifyToken();
 
@@ -74,6 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(async (identifier: string, password: string, method: 'email' | 'phone' = 'email') => {
     try {
       isLoginInProgress.current = true;
+      
       const response = await authAPI.login(identifier, password, method);
 
       if (response.success && response.token) {
@@ -86,7 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // Give Safari iOS a moment to persist localStorage
         await new Promise(resolve => setTimeout(resolve, 100));
-
+        
         // Redirect based on role
         const roleRoutes = {
           admin: '/admin',
@@ -95,7 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
 
         const redirectPath = roleRoutes[response.data.role as keyof typeof roleRoutes] || '/';
-        
+
         // Use setTimeout to ensure state updates complete before navigation
         setTimeout(() => {
           isLoginInProgress.current = false;
@@ -115,7 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isLoginInProgress.current = false;
       return {
         success: false,
-        message: 'Failed to connect to server'
+        message: 'An error occurred during login'
       };
     }
   }, [router]);
@@ -128,7 +124,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setUser(null);
       authAPI.removeToken();
-      router.push('/login');
     }
   }, [router]);
 

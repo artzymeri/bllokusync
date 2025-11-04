@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import {
   Euro,
   TrendingUp,
@@ -17,7 +19,7 @@ import {
   AlertCircle,
   CheckCircle2,
   Clock,
-  Calculator, Loader2
+  Calculator, Loader2, Mail
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -41,6 +43,7 @@ export function MonthlyReportDashboard({ propertyId, month, year, onSuccess }: M
   const [spendingAllocations, setSpendingAllocations] = useState<SpendingAllocation[]>([]);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [sendEmailToTenants, setSendEmailToTenants] = useState(true);
   // Local input states for editing
   const [editingAmounts, setEditingAmounts] = useState<Record<number, string>>({});
   const [editingPercentages, setEditingPercentages] = useState<Record<number, string>>({});
@@ -231,6 +234,7 @@ export function MonthlyReportDashboard({ propertyId, month, year, onSuccess }: M
         year,
         notes,
         spendingAllocations,
+        sendEmailToTenants,
       });
 
       toast.success("Raporti mujor u gjenerua me sukses!");
@@ -720,6 +724,34 @@ export function MonthlyReportDashboard({ propertyId, month, year, onSuccess }: M
             rows={4}
             className="text-xs md:text-sm"
           />
+        </CardContent>
+      </Card>
+
+      {/* Email Notification Option */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-start space-x-3">
+            <Checkbox 
+              id="send-email-to-tenants" 
+              checked={sendEmailToTenants}
+              onCheckedChange={(checked) => setSendEmailToTenants(checked as boolean)}
+              className="mt-1"
+            />
+            <div className="flex-1">
+              <Label 
+                htmlFor="send-email-to-tenants" 
+                className="text-sm md:text-base font-medium cursor-pointer"
+              >
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  Dërgo njoftim me email tek të gjithë banorët
+                </div>
+              </Label>
+              <p className="text-xs md:text-sm text-muted-foreground mt-1">
+                Banorët do të marrin një email me detajet e raportit mujor kur gjeneroni raportin
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
 

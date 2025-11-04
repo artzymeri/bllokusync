@@ -66,6 +66,7 @@ export interface GenerateMonthlyReportData {
   year: number;
   notes?: string;
   spendingAllocations?: SpendingBreakdown[];
+  sendEmailToTenants?: boolean;
 }
 
 // Get report preview (without saving)

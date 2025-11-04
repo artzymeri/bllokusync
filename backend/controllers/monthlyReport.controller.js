@@ -10,8 +10,16 @@ const emailService = require('../services/email.service');
 // Generate or regenerate a monthly report for a property
 exports.generateMonthlyReport = async (req, res) => {
   try {
-    const { propertyId, month, year, notes, spendingAllocations } = req.body;
+    const { propertyId, month, year, notes, spendingAllocations, sendEmailToTenants } = req.body;
     const userId = req.user.id;
+
+    console.log('📋 Generate Report Request Body:', {
+      propertyId,
+      month,
+      year,
+      sendEmailToTenants,
+      sendEmailToTenantsType: typeof sendEmailToTenants
+    });
 
     // Validate inputs
     if (!propertyId || !month || !year) {
@@ -160,7 +168,16 @@ exports.generateMonthlyReport = async (req, res) => {
     }
 
     // Send email notifications to all tenants (async, don't wait for completion)
-    if (allTenants.length > 0) {
+    // Only send emails if sendEmailToTenants is true (default to true if not provided)
+    const shouldSendEmails = sendEmailToTenants !== false;
+    
+    console.log('📧 Email Decision:', {
+      sendEmailToTenants,
+      shouldSendEmails,
+      tenantsCount: allTenants.length
+    });
+    
+    if (allTenants.length > 0 && shouldSendEmails) {
       console.log(`📧 Sending monthly report emails to ${allTenants.length} tenants...`);
 
       // Send emails in the background without blocking the response
@@ -171,6 +188,10 @@ exports.generateMonthlyReport = async (req, res) => {
         .catch(emailError => {
           console.error('❌ Error sending report emails:', emailError);
         });
+    } else if (!shouldSendEmails) {
+      console.log(`📧 Email notifications skipped per user request`);
+    } else {
+      console.log(`📧 No tenants to notify`);
     }
 
     // Return consistent 200 status for both create and update to avoid frontend confusion
@@ -179,7 +200,11 @@ exports.generateMonthlyReport = async (req, res) => {
       message: isNewReport ? 'Report generated successfully' : 'Report updated successfully',
       isNew: isNewReport,
       report: completeReport,
-      emailNotification: allTenants.length > 0 ? `Sending email notifications to ${allTenants.length} tenants` : 'No tenants to notify'
+      emailNotification: shouldSendEmails && allTenants.length > 0
+        ? `Sending email notifications to ${allTenants.length} tenants`
+        : shouldSendEmails
+          ? 'No tenants to notify'
+          : 'Email notifications disabled'
     });
   } catch (error) {
     console.error('Generate monthly report error:', error);
