@@ -51,7 +51,7 @@ const PMEditTenantScreen = ({ navigation, tenantId }) => {
   const fetchTenantDetails = async () => {
     try {
       setLoading(true);
-      const response = await apiFetch(`/api/tenants/${tenantId}`);
+      const response = await apiFetch(`/api/users/tenants/${tenantId}`);
 
       if (!response.ok) {
         throw new Error('Failed to fetch tenant details');
@@ -167,7 +167,7 @@ const PMEditTenantScreen = ({ navigation, tenantId }) => {
         expiry_date: expiryDate || null,
       };
 
-      const response = await apiFetch(`/api/tenants/${tenantId}`, {
+      const response = await apiFetch(`/api/users/tenants/${tenantId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -203,7 +203,7 @@ const PMEditTenantScreen = ({ navigation, tenantId }) => {
   const handleDelete = async () => {
     try {
       setDeleting(true);
-      const response = await apiFetch(`/api/tenants/${tenantId}`, {
+      const response = await apiFetch(`/api/users/tenants/${tenantId}`, {
         method: 'DELETE',
       });
 
@@ -405,12 +405,12 @@ const PMEditTenantScreen = ({ navigation, tenantId }) => {
 
           {/* Monthly Rate */}
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Tarifa Mujore (Lekë)</Text>
+            <Text style={styles.label}>Tarifa Mujore</Text>
             <View style={styles.inputWrapper}>
               <Ionicons name="cash-outline" size={18} color="#616061" />
               <TextInput
                 style={styles.input}
-                placeholder="p.sh. 15000"
+                placeholder="p.sh 13"
                 value={monthlyRate}
                 onChangeText={setMonthlyRate}
                 placeholderTextColor="#616061"

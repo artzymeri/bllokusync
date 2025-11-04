@@ -24,7 +24,7 @@ const PMTenantDetailsScreen = ({ navigation, tenantId }) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiFetch(`/api/tenants/${tenantId}`);
+      const response = await apiFetch(`/api/users/tenants/${tenantId}`);
 
       if (!response.ok) {
         throw new Error('Failed to fetch tenant details');
@@ -216,7 +216,7 @@ const PMTenantDetailsScreen = ({ navigation, tenantId }) => {
                 </View>
                 <View style={styles.infoContent}>
                   <Text style={styles.infoLabel}>Tarifa Mujore</Text>
-                  <Text style={styles.infoValue}>{tenant.monthly_rate} Lekë</Text>
+                  <Text style={styles.infoValue}>{tenant.monthly_rate}</Text>
                 </View>
               </View>
 
@@ -480,4 +480,3 @@ const styles = StyleSheet.create({
 });
 
 export default PMTenantDetailsScreen;
-

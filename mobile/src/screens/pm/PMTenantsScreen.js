@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   TextInput,
   Alert,
   Modal,
+  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { apiFetch } from '../../services/api-client';
@@ -22,6 +23,8 @@ const PMTenantsScreen = ({ navigation }) => {
   const [filteredTenants, setFilteredTenants] = useState([]);
   const [error, setError] = useState(null);
   const [menuVisible, setMenuVisible] = useState(null);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 });
+  const menuButtonRefs = useRef({});
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [tenantToDelete, setTenantToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
@@ -47,7 +50,7 @@ const PMTenantsScreen = ({ navigation }) => {
   const fetchTenants = async () => {
     try {
       setError(null);
-      const response = await apiFetch('/api/tenants?myTenants=true&limit=100');
+      const response = await apiFetch('/api/users/tenants?myTenants=true&limit=100');
       
       if (!response.ok) {
         throw new Error('Failed to fetch tenants');
@@ -81,7 +84,7 @@ const PMTenantsScreen = ({ navigation }) => {
 
     try {
       setDeleting(true);
-      const response = await apiFetch(`/api/tenants/${tenantToDelete.id}`, {
+      const response = await apiFetch(`/api/users/tenants/${tenantToDelete.id}`, {
         method: 'DELETE',
       });
 
@@ -118,6 +121,35 @@ const PMTenantsScreen = ({ navigation }) => {
     }
   };
 
+  const handleMenuPress = (tenantId, event) => {
+    if (menuVisible === tenantId) {
+      setMenuVisible(null);
+      return;
+    }
+
+    const buttonRef = menuButtonRefs.current[tenantId];
+    if (buttonRef) {
+      buttonRef.measure((x, y, width, height, pageX, pageY) => {
+        const screenWidth = Dimensions.get('window').width;
+        const menuWidth = 180;
+        const menuHeight = 100;
+        
+        // Position menu to the left of the button
+        let rightPosition = screenWidth - pageX - width;
+        let topPosition = pageY + height + 5;
+        
+        // Adjust if menu goes off screen
+        const screenHeight = Dimensions.get('window').height;
+        if (topPosition + menuHeight > screenHeight - 20) {
+          topPosition = pageY - menuHeight - 5;
+        }
+        
+        setMenuPosition({ top: topPosition, right: rightPosition });
+        setMenuVisible(tenantId);
+      });
+    }
+  };
+
   const TenantCard = ({ tenant }) => {
     const isMenuOpen = menuVisible === tenant.id;
     
@@ -147,10 +179,11 @@ const PMTenantsScreen = ({ navigation }) => {
             </View>
 
             <TouchableOpacity 
+              ref={(ref) => menuButtonRefs.current[tenant.id] = ref}
               style={styles.menuButton}
               onPress={(e) => {
                 e.stopPropagation();
-                setMenuVisible(isMenuOpen ? null : tenant.id);
+                handleMenuPress(tenant.id, e);
               }}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
@@ -174,36 +207,6 @@ const PMTenantsScreen = ({ navigation }) => {
             )}
           </View>
         </TouchableOpacity>
-
-        {isMenuOpen && (
-          <View style={styles.contextMenu}>
-            <TouchableOpacity 
-              style={styles.menuItem}
-              onPress={(e) => {
-                e.stopPropagation();
-                handleEdit(tenant.id);
-              }}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="create-outline" size={20} color="#1d1c1d" />
-              <Text style={styles.menuItemText}>Ndrysho</Text>
-            </TouchableOpacity>
-            
-            <View style={styles.menuDivider} />
-            
-            <TouchableOpacity 
-              style={styles.menuItem}
-              onPress={(e) => {
-                e.stopPropagation();
-                openDeleteModal(tenant);
-              }}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="trash-outline" size={20} color="#e01e5a" />
-              <Text style={[styles.menuItemText, styles.menuItemTextDanger]}>Fshi</Text>
-            </TouchableOpacity>
-          </View>
-        )}
       </View>
     );
   };
@@ -272,56 +275,52 @@ const PMTenantsScreen = ({ navigation }) => {
         )}
       </ScrollView>
 
+      {/* Context Menu Modal - Positioned below button */}
       <Modal
-        visible={deleteModalVisible}
+        visible={menuVisible !== null}
         transparent={true}
-        animationType="fade"
-        onRequestClose={() => !deleting && setDeleteModalVisible(false)}
+        animationType="none"
+        onRequestClose={() => setMenuVisible(null)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalIconWrapper}>
-              <Ionicons name="alert-circle" size={48} color="#e01e5a" />
-            </View>
+        <TouchableOpacity 
+          style={styles.menuModalOverlay}
+          activeOpacity={1}
+          onPress={() => setMenuVisible(null)}
+        >
+          <View 
+            style={[
+              styles.contextMenuModal,
+              {
+                position: 'absolute',
+                top: menuPosition.top,
+                right: menuPosition.right,
+              }
+            ]}
+          >
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => handleEdit(menuVisible)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="create-outline" size={20} color="#1d1c1d" />
+              <Text style={styles.menuItemText}>Ndrysho</Text>
+            </TouchableOpacity>
             
-            <Text style={styles.modalTitle}>Konfirmo Fshirjen</Text>
-            <Text style={styles.modalMessage}>
-              A jeni i sigurt që dëshironi të fshini banorin{'\n'}
-              <Text style={styles.modalTenantName}>
-                {tenantToDelete?.name} {tenantToDelete?.surname}
-              </Text>?
-            </Text>
-            <Text style={styles.modalWarning}>Ky veprim nuk mund të zhbëhet.</Text>
-
-            <View style={styles.modalActions}>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => {
-                  setDeleteModalVisible(false);
-                  setTenantToDelete(null);
-                }}
-                disabled={deleting}
-              >
-                <Text style={styles.cancelButtonText}>Anulo</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.deleteButton]}
-                onPress={handleDeleteTenant}
-                disabled={deleting}
-              >
-                {deleting ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <>
-                    <Ionicons name="trash-outline" size={18} color="#ffffff" />
-                    <Text style={styles.deleteButtonText}>Fshi</Text>
-                  </>
-                )}
-              </TouchableOpacity>
-            </View>
+            <View style={styles.menuDivider} />
+            
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => {
+                const tenant = tenants.find(t => t.id === menuVisible);
+                if (tenant) openDeleteModal(tenant);
+              }}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="trash-outline" size={20} color="#e01e5a" />
+              <Text style={[styles.menuItemText, { color: '#e01e5a' }]}>Fshi</Text>
+            </TouchableOpacity>
           </View>
-        </View>
+        </TouchableOpacity>
       </Modal>
     </View>
   );
@@ -426,6 +425,7 @@ const styles = StyleSheet.create({
   },
   tenantCardWrapper: {
     position: 'relative',
+    zIndex: 1,
   },
   tenantCard: {
     backgroundColor: '#ffffff',
@@ -433,6 +433,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e8e8e8',
     padding: 16,
+    overflow: 'visible',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -500,22 +501,20 @@ const styles = StyleSheet.create({
     color: '#616061',
     fontWeight: '400',
   },
-  contextMenu: {
-    position: 'absolute',
-    top: 52,
-    right: 8,
-    backgroundColor: '#ffffff',
+  contextMenuModal: {
+    backgroundColor: '#fff',
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e8e8e8',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 8,
-    zIndex: 10003,
-    minWidth: 160,
+    minWidth: 180,
     overflow: 'hidden',
+  },
+  menuModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
   menuItem: {
     flexDirection: 'row',
@@ -529,85 +528,9 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: '#1d1c1d',
   },
-  menuItemTextDanger: {
-    color: '#e01e5a',
-  },
   menuDivider: {
     height: 1,
     backgroundColor: '#f8f8f8',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  modalContent: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    width: '100%',
-    maxWidth: 400,
-    padding: 24,
-    alignItems: 'center',
-  },
-  modalIconWrapper: {
-    marginBottom: 16,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#1d1c1d',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  modalMessage: {
-    fontSize: 15,
-    color: '#616061',
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 8,
-  },
-  modalTenantName: {
-    fontWeight: '700',
-    color: '#1d1c1d',
-  },
-  modalWarning: {
-    fontSize: 14,
-    color: '#e01e5a',
-    fontWeight: '400',
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    gap: 12,
-    width: '100%',
-  },
-  modalButton: {
-    flex: 1,
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelButton: {
-    backgroundColor: '#f8f8f8',
-  },
-  cancelButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#1d1c1d',
-  },
-  deleteButton: {
-    backgroundColor: '#e01e5a',
-    flexDirection: 'row',
-    gap: 6,
-  },
-  deleteButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#ffffff',
   },
 });
 

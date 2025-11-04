@@ -10,6 +10,8 @@ import PMPropertiesScreen from './pm/PMPropertiesScreen';
 import PMPropertyDetailsScreen from './pm/PMPropertyDetailsScreen';
 import PMEditPropertyScreen from './pm/PMEditPropertyScreen';
 import PMTenantsScreen from './pm/PMTenantsScreen';
+import PMTenantDetailsScreen from './pm/PMTenantDetailsScreen';
+import PMEditTenantScreen from './pm/PMEditTenantScreen';
 import PMPaymentsScreen from './pm/PMPaymentsScreen';
 import PMMonthlyReportsScreen from './pm/PMMonthlyReportsScreen';
 import PMReportsScreen from './pm/PMReportsScreen';
@@ -43,6 +45,10 @@ const PropertyManagerScreen = ({ user, onLogout }) => {
         return <PMEditPropertyScreen navigation={navigation} propertyId={routeParams.propertyId} />;
       case 'tenants':
         return <PMTenantsScreen navigation={navigation} />;
+      case 'tenant-details':
+        return <PMTenantDetailsScreen navigation={navigation} tenantId={routeParams.tenantId} />;
+      case 'edit-tenant':
+        return <PMEditTenantScreen navigation={navigation} tenantId={routeParams.tenantId} />;
       case 'payments':
         return <PMPaymentsScreen navigation={navigation} />;
       case 'monthly-reports':

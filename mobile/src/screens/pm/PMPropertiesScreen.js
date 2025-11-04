@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   TextInput,
   Alert,
   Modal,
+  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { apiFetch } from '../../services/api-client';
@@ -22,6 +23,8 @@ const PMPropertiesScreen = ({ navigation }) => {
   const [filteredProperties, setFilteredProperties] = useState([]);
   const [error, setError] = useState(null);
   const [menuVisible, setMenuVisible] = useState(null);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 });
+  const menuButtonRefs = useRef({});
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [propertyToDelete, setPropertyToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
@@ -124,13 +127,42 @@ const PMPropertiesScreen = ({ navigation }) => {
     }
   };
 
+  const handleMenuPress = (propertyId) => {
+    if (menuVisible === propertyId) {
+      setMenuVisible(null);
+      return;
+    }
+
+    const buttonRef = menuButtonRefs.current[propertyId];
+    if (buttonRef) {
+      buttonRef.measure((x, y, width, height, pageX, pageY) => {
+        const screenWidth = Dimensions.get('window').width;
+        const menuWidth = 180;
+        const menuHeight = 100;
+        
+        // Position menu to the left of the button
+        let rightPosition = screenWidth - pageX - width;
+        let topPosition = pageY + height + 5;
+        
+        // Adjust if menu goes off screen
+        const screenHeight = Dimensions.get('window').height;
+        if (topPosition + menuHeight > screenHeight - 20) {
+          topPosition = pageY - menuHeight - 5;
+        }
+        
+        setMenuPosition({ top: topPosition, right: rightPosition });
+        setMenuVisible(propertyId);
+      });
+    }
+  };
+
   const PropertyCard = ({ property }) => {
     const floorsCount = calculateFloorsCount(property.floors_from, property.floors_to);
     const isMenuOpen = menuVisible === property.id;
-
+    
     return (
       <View style={styles.propertyCardWrapper}>
-        <TouchableOpacity
+        <TouchableOpacity 
           style={styles.propertyCard}
           activeOpacity={0.6}
           onPress={() => handleCardPress(property.id)}
@@ -152,10 +184,11 @@ const PMPropertiesScreen = ({ navigation }) => {
             </View>
 
             <TouchableOpacity
+              ref={(ref) => menuButtonRefs.current[property.id] = ref}
               style={styles.menuButton}
               onPress={(e) => {
                 e.stopPropagation();
-                setMenuVisible(isMenuOpen ? null : property.id);
+                handleMenuPress(property.id);
               }}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
@@ -179,36 +212,6 @@ const PMPropertiesScreen = ({ navigation }) => {
             )}
           </View>
         </TouchableOpacity>
-
-        {isMenuOpen && (
-          <View style={styles.contextMenu}>
-            <TouchableOpacity 
-              style={styles.menuItem}
-              onPress={(e) => {
-                e.stopPropagation();
-                handleEdit(property.id);
-              }}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="create-outline" size={20} color="#1d1c1d" />
-              <Text style={styles.menuItemText}>Ndrysho</Text>
-            </TouchableOpacity>
-            
-            <View style={styles.menuDivider} />
-            
-            <TouchableOpacity 
-              style={styles.menuItem}
-              onPress={(e) => {
-                e.stopPropagation();
-                openDeleteModal(property);
-              }}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="trash-outline" size={20} color="#e01e5a" />
-              <Text style={[styles.menuItemText, styles.menuItemTextDanger]}>Fshi</Text>
-            </TouchableOpacity>
-          </View>
-        )}
       </View>
     );
   };
@@ -276,6 +279,54 @@ const PMPropertiesScreen = ({ navigation }) => {
           </View>
         )}
       </ScrollView>
+
+      {/* Context Menu Modal - Positioned below button */}
+      <Modal
+        visible={menuVisible !== null}
+        transparent={true}
+        animationType="none"
+        onRequestClose={() => setMenuVisible(null)}
+      >
+        <TouchableOpacity 
+          style={styles.menuModalOverlay}
+          activeOpacity={1}
+          onPress={() => setMenuVisible(null)}
+        >
+          <View 
+            style={[
+              styles.contextMenuModal,
+              {
+                position: 'absolute',
+                top: menuPosition.top,
+                right: menuPosition.right,
+              }
+            ]}
+          >
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => handleEdit(menuVisible)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="create-outline" size={20} color="#1d1c1d" />
+              <Text style={styles.menuItemText}>Ndrysho</Text>
+            </TouchableOpacity>
+            
+            <View style={styles.menuDivider} />
+            
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => {
+                const property = properties.find(p => p.id === menuVisible);
+                if (property) openDeleteModal(property);
+              }}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="trash-outline" size={20} color="#e01e5a" />
+              <Text style={[styles.menuItemText, { color: '#e01e5a' }]}>Fshi</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       <Modal
         visible={deleteModalVisible}
@@ -429,6 +480,7 @@ const styles = StyleSheet.create({
   },
   propertyCardWrapper: {
     position: 'relative',
+    zIndex: 1,
   },
   propertyCard: {
     backgroundColor: '#ffffff',
@@ -436,6 +488,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e8e8e8',
     padding: 16,
+    overflow: 'visible',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -515,10 +568,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 12,
-    elevation: 8,
+    elevation: 16,
     zIndex: 10003,
     minWidth: 160,
-    overflow: 'hidden',
+    overflow: 'visible',
   },
   menuItem: {
     flexDirection: 'row',
@@ -611,6 +664,39 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#ffffff',
+  },
+  menuOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    zIndex: 10002,
+  },
+  fullScreenOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    zIndex: 10002,
+  },
+  contextMenuModal: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+    minWidth: 180,
+    overflow: 'hidden',
+  },
+  menuModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
 });
 
