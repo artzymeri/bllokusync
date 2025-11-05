@@ -18,10 +18,11 @@ const TenantLayout = ({ children, currentRoute, onNavigate, user, onLogout }) =>
   const navigationItems = [
     { id: 'dashboard', icon: 'home', label: 'Paneli Kryesor', route: 'dashboard' },
     { id: 'payments', icon: 'cash', label: 'Pagesat e Mia', route: 'payments' },
-    { id: 'report-problem', icon: 'alert-circle', label: 'Raporto Problemin', route: 'report-problem' },
+    { id: 'reports', icon: 'alert-circle', label: 'Raportet', route: 'reports' },
     { id: 'complaints', icon: 'chatbox', label: 'Ankesat', route: 'complaints' },
     { id: 'suggestions', icon: 'bulb', label: 'Sugjerimet', route: 'suggestions' },
     { id: 'monthly-reports', icon: 'document-text', label: 'Raportet Mujore', route: 'monthly-reports' },
+    { id: 'settings', icon: 'settings', label: 'Cilësimet', route: 'settings' },
   ];
 
   const handleLogout = () => {
@@ -140,7 +141,14 @@ const TenantLayout = ({ children, currentRoute, onNavigate, user, onLogout }) =>
 
               {/* User Profile Section */}
               <View style={styles.sidebarFooter}>
-                <View style={styles.userInfo}>
+                <TouchableOpacity 
+                  style={styles.userInfo}
+                  onPress={() => {
+                    setMenuVisible(false);
+                    onNavigate('settings');
+                  }}
+                  activeOpacity={0.7}
+                >
                   <View style={styles.userAvatar}>
                     <Text style={styles.userAvatarText}>
                       {user?.name?.[0]}{user?.surname?.[0]}
@@ -154,7 +162,8 @@ const TenantLayout = ({ children, currentRoute, onNavigate, user, onLogout }) =>
                       {user?.email}
                     </Text>
                   </View>
-                </View>
+                  <Ionicons name="chevron-forward" size={20} color="#d1fae5" />
+                </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.logoutButton}
                   onPress={handleLogout}

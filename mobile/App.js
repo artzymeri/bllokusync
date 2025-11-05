@@ -43,6 +43,10 @@ export default function App() {
     setIsAuthenticated(false);
   };
 
+  const handleUpdateUser = (updatedUserData) => {
+    setUser(updatedUserData);
+  };
+
   // Show loading spinner while checking auth
   if (isLoading) {
     return (
@@ -60,9 +64,9 @@ export default function App() {
 
     // Route based on user role
     if (user?.role === 'property_manager') {
-      return <PropertyManagerScreen user={user} onLogout={handleLogout} />;
+      return <PropertyManagerScreen user={user} onLogout={handleLogout} onUpdateUser={handleUpdateUser} />;
     } else if (user?.role === 'tenant') {
-      return <TenantScreen user={user} onLogout={handleLogout} />;
+      return <TenantScreen user={user} onLogout={handleLogout} onUpdateUser={handleUpdateUser} />;
     }
 
     // Default fallback

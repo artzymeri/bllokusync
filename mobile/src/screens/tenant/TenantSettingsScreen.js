@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import userService from '../../services/user.service';
 import AuthService from '../../services/auth.service';
 
-const PMSettingsScreen = ({ user, onUpdateUser }) => {
+const TenantSettingsScreen = ({ user, onUpdateUser }) => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -156,6 +156,7 @@ const PMSettingsScreen = ({ user, onUpdateUser }) => {
                 onChangeText={(text) => handleInputChange('name', text)}
                 placeholder="Shkruaj emrin tënd"
                 editable={!loading}
+                placeholderTextColor="#94a3b8"
               />
             </View>
 
@@ -170,6 +171,7 @@ const PMSettingsScreen = ({ user, onUpdateUser }) => {
                 onChangeText={(text) => handleInputChange('surname', text)}
                 placeholder="Shkruaj mbiemrin tënd"
                 editable={!loading}
+                placeholderTextColor="#94a3b8"
               />
             </View>
           </View>
@@ -188,6 +190,7 @@ const PMSettingsScreen = ({ user, onUpdateUser }) => {
               keyboardType="email-address"
               autoCapitalize="none"
               editable={!loading}
+              placeholderTextColor="#94a3b8"
             />
           </View>
 
@@ -204,6 +207,7 @@ const PMSettingsScreen = ({ user, onUpdateUser }) => {
               placeholder="Shkruaj numrin e telefonit"
               keyboardType="phone-pad"
               editable={!loading}
+              placeholderTextColor="#94a3b8"
             />
           </View>
 
@@ -233,6 +237,7 @@ const PMSettingsScreen = ({ user, onUpdateUser }) => {
                   textContentType="password"
                   secureTextEntry={!showPasswords.currentPassword}
                   editable={!loading}
+                  placeholderTextColor="#94a3b8"
                 />
                 <TouchableOpacity
                   onPress={() => togglePasswordVisibility('currentPassword')}
@@ -261,6 +266,7 @@ const PMSettingsScreen = ({ user, onUpdateUser }) => {
                   textContentType="password"
                   secureTextEntry={!showPasswords.newPassword}
                   editable={!loading}
+                  placeholderTextColor="#94a3b8"
                 />
                 <TouchableOpacity
                   onPress={() => togglePasswordVisibility('newPassword')}
@@ -288,6 +294,7 @@ const PMSettingsScreen = ({ user, onUpdateUser }) => {
                   textContentType="password"
                   secureTextEntry={!showPasswords.confirmPassword}
                   editable={!loading}
+                  placeholderTextColor="#94a3b8"
                 />
                 <TouchableOpacity
                   onPress={() => togglePasswordVisibility('confirmPassword')}
@@ -425,7 +432,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   submitButton: {
-    backgroundColor: '#6366f1',
+    backgroundColor: '#059669',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -433,7 +440,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 8,
-    shadowColor: '#6366f1',
+    shadowColor: '#059669',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -449,4 +456,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default PMSettingsScreen;
+export default TenantSettingsScreen;

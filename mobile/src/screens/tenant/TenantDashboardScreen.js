@@ -88,7 +88,7 @@ const TenantDashboardScreen = ({ user }) => {
         <Text style={styles.sectionTitle}>Veprime të Shpejta</Text>
         <QuickActionCard
           icon="alert-circle-outline"
-          title="Raporto Problemin"
+          title="Raportet"
           description="Raporto një problem në apartamentin tuaj"
           color="#ef4444"
         />
@@ -100,13 +100,13 @@ const TenantDashboardScreen = ({ user }) => {
         />
         <QuickActionCard
           icon="chatbox-outline"
-          title="Dërgo Ankesë"
+          title="Ankesat"
           description="Dërgo një ankesë te menaxheri"
           color="#f59e0b"
         />
         <QuickActionCard
           icon="bulb-outline"
-          title="Sugjerimi"
+          title="Sugjerimet"
           description="Ndaj mendimet dhe idetë tuaja"
           color="#8b5cf6"
         />
