@@ -36,7 +36,9 @@ class TenantService {
       
       // Check if monthly reports are available (backend filters based on property setting)
       const monthlyReports = dashboardData?.data?.monthlyReports || [];
-      return monthlyReports.length > 0 || dashboardData?.data?.tenant?.property_ids?.length > 0;
+      // Only return true if there are actual monthly reports available
+      // The backend already filters based on show_monthly_reports_to_tenants
+      return monthlyReports.length > 0;
     } catch (error) {
       console.error('Check monthly reports access error:', error);
       return false;

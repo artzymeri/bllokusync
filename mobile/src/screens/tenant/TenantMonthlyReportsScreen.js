@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import TenantService from '../../services/tenant.service';
+import MonthlyReportPDFViewer from '../../components/MonthlyReportPDFViewer';
 
 const TenantMonthlyReportsScreen = ({ hasAccess: initialAccess }) => {
   const [loading, setLoading] = useState(true);
@@ -17,6 +18,8 @@ const TenantMonthlyReportsScreen = ({ hasAccess: initialAccess }) => {
   const [hasAccess, setHasAccess] = useState(initialAccess || false);
   const [reports, setReports] = useState([]);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedReport, setSelectedReport] = useState(null);
+  const [pdfModalVisible, setPdfModalVisible] = useState(false);
 
   // Fetch monthly reports
   const fetchMonthlyReports = useCallback(async () => {
@@ -49,7 +52,13 @@ const TenantMonthlyReportsScreen = ({ hasAccess: initialAccess }) => {
 
   // Format currency
   const formatCurrency = (amount) => {
+    if (amount === null || amount === undefined || amount === '') {
+      return '€0.00';
+    }
     const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+    if (isNaN(numAmount)) {
+      return '€0.00';
+    }
     return `€${numAmount.toFixed(2)}`;
   };
 
@@ -67,6 +76,16 @@ const TenantMonthlyReportsScreen = ({ hasAccess: initialAccess }) => {
   const totalBudget = reports.reduce((sum, report) => {
     return sum + (parseFloat(report.total_budget) || 0);
   }, 0);
+
+  const handleViewReport = (report) => {
+    setSelectedReport(report);
+    setPdfModalVisible(true);
+  };
+
+  const handleClosePdfModal = () => {
+    setPdfModalVisible(false);
+    setSelectedReport(null);
+  };
 
   if (loading) {
     return (
@@ -161,17 +180,29 @@ const TenantMonthlyReportsScreen = ({ hasAccess: initialAccess }) => {
               report={report} 
               formatCurrency={formatCurrency}
               formatMonthYear={formatMonthYear}
+              onViewReport={handleViewReport}
             />
           ))
         )}
       </View>
+
+      {/* PDF Viewer Modal */}
+      <MonthlyReportPDFViewer
+        visible={pdfModalVisible}
+        report={selectedReport}
+        onClose={handleClosePdfModal}
+      />
     </ScrollView>
   );
 };
 
-const ReportCard = ({ report, formatCurrency, formatMonthYear }) => {
+const ReportCard = ({ report, formatCurrency, formatMonthYear, onViewReport }) => {
   return (
-    <View style={styles.reportCard}>
+    <TouchableOpacity 
+      style={styles.reportCard}
+      onPress={() => onViewReport(report)}
+      activeOpacity={0.7}
+    >
       <View style={styles.reportHeader}>
         <View style={styles.reportIconContainer}>
           <Ionicons name="calendar" size={24} color="#059669" />
@@ -179,6 +210,9 @@ const ReportCard = ({ report, formatCurrency, formatMonthYear }) => {
         <View style={styles.reportHeaderContent}>
           <Text style={styles.reportMonth}>{formatMonthYear(report.report_month)}</Text>
           <Text style={styles.reportProperty}>{report.property?.name || 'Prona'}</Text>
+        </View>
+        <View style={styles.viewButtonContainer}>
+          <Ionicons name="eye" size={20} color="#059669" />
         </View>
       </View>
 
@@ -194,38 +228,6 @@ const ReportCard = ({ report, formatCurrency, formatMonthYear }) => {
           <Text style={styles.reportDetailValue}>{formatCurrency(report.total_budget)}</Text>
         </View>
 
-        {/* Spending Details */}
-        {report.spending_details && report.spending_details.length > 0 && (
-          <>
-            <View style={styles.reportDetailRow}>
-              <View style={styles.reportDetailLabel}>
-                <Ionicons name="list-outline" size={18} color="#64748b" />
-                <Text style={styles.reportDetailText}>Shpenzime</Text>
-              </View>
-              <Text style={styles.reportDetailValue}>{report.spending_details.length} kategori</Text>
-            </View>
-            
-            {/* Show top 3 spending categories */}
-            <View style={styles.spendingList}>
-              {report.spending_details.slice(0, 3).map((spending, index) => (
-                <View key={index} style={styles.spendingItem}>
-                  <Text style={styles.spendingName} numberOfLines={1}>
-                    • {spending.name}
-                  </Text>
-                  <Text style={styles.spendingAmount}>
-                    {formatCurrency(spending.amount)}
-                  </Text>
-                </View>
-              ))}
-              {report.spending_details.length > 3 && (
-                <Text style={styles.moreSpending}>
-                  +{report.spending_details.length - 3} më shumë
-                </Text>
-              )}
-            </View>
-          </>
-        )}
-
         {/* Notes */}
         {report.notes && (
           <View style={styles.notesContainer}>
@@ -239,7 +241,12 @@ const ReportCard = ({ report, formatCurrency, formatMonthYear }) => {
           </View>
         )}
       </View>
-    </View>
+
+      <View style={styles.viewReportFooter}>
+        <Text style={styles.viewReportText}>Trokit për të parë PDF-në</Text>
+        <Ionicons name="chevron-forward" size={20} color="#059669" />
+      </View>
+    </TouchableOpacity>
   );
 };
 
@@ -390,33 +397,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1e293b',
   },
-  spendingList: {
-    marginTop: 8,
-    paddingLeft: 26,
-  },
-  spendingItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  spendingName: {
-    flex: 1,
-    fontSize: 13,
-    color: '#64748b',
-    marginRight: 8,
-  },
-  spendingAmount: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#059669',
-  },
-  moreSpending: {
-    fontSize: 12,
-    color: '#94a3b8',
-    fontStyle: 'italic',
-    marginTop: 4,
-  },
   notesContainer: {
     marginTop: 12,
     paddingTop: 12,
@@ -495,6 +475,27 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textAlign: 'center',
     paddingHorizontal: 32,
+  },
+  viewButtonContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#d1fae5',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  viewReportFooter: {
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  viewReportText: {
+    fontSize: 14,
+    color: '#059669',
+    fontWeight: '500',
   },
 });
 
