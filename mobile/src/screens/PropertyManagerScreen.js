@@ -18,14 +18,20 @@ import PMReportsScreen from './pm/PMReportsScreen';
 import PMComplaintsScreen from './pm/PMComplaintsScreen';
 import PMSuggestionsScreen from './pm/PMSuggestionsScreen';
 import PMConfigurationsScreen from './pm/PMConfigurationsScreen';
+import PMSettingsScreen from './pm/PMSettingsScreen';
 
 const PropertyManagerScreen = ({ user, onLogout }) => {
   const [currentRoute, setCurrentRoute] = useState('dashboard');
   const [routeParams, setRouteParams] = useState({});
+  const [currentUser, setCurrentUser] = useState(user);
 
   const handleNavigate = (route, params = {}) => {
     setCurrentRoute(route);
     setRouteParams(params);
+  };
+
+  const handleUpdateUser = (updatedUser) => {
+    setCurrentUser(updatedUser);
   };
 
   // Create navigation object to pass to child screens
@@ -36,7 +42,7 @@ const PropertyManagerScreen = ({ user, onLogout }) => {
   const renderScreen = () => {
     switch (currentRoute) {
       case 'dashboard':
-        return <PMDashboardScreen navigation={navigation} user={user} />;
+        return <PMDashboardScreen navigation={navigation} user={currentUser} />;
       case 'properties':
         return <PMPropertiesScreen navigation={navigation} />;
       case 'property-details':
@@ -61,8 +67,10 @@ const PropertyManagerScreen = ({ user, onLogout }) => {
         return <PMSuggestionsScreen navigation={navigation} />;
       case 'configurations':
         return <PMConfigurationsScreen navigation={navigation} />;
+      case 'settings':
+        return <PMSettingsScreen user={currentUser} onUpdateUser={handleUpdateUser} />;
       default:
-        return <PMDashboardScreen navigation={navigation} user={user} />;
+        return <PMDashboardScreen navigation={navigation} user={currentUser} />;
     }
   };
 
@@ -72,7 +80,7 @@ const PropertyManagerScreen = ({ user, onLogout }) => {
         <PMLayout
           currentRoute={currentRoute}
           onNavigate={handleNavigate}
-          user={user}
+          user={currentUser}
           onLogout={onLogout}
         >
           {renderScreen()}

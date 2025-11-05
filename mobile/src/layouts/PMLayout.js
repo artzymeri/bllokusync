@@ -144,7 +144,14 @@ const PMLayout = ({ children, currentRoute, onNavigate, user, onLogout }) => {
 
               {/* User Profile Section */}
               <View style={styles.sidebarFooter}>
-                <View style={styles.userInfo}>
+                <TouchableOpacity 
+                  style={styles.userInfo}
+                  onPress={() => {
+                    setMenuVisible(false);
+                    onNavigate('settings');
+                  }}
+                  activeOpacity={0.7}
+                >
                   <View style={styles.userAvatar}>
                     <Text style={styles.userAvatarText}>
                       {user?.name?.[0]}{user?.surname?.[0]}
@@ -158,7 +165,8 @@ const PMLayout = ({ children, currentRoute, onNavigate, user, onLogout }) => {
                       {user?.email}
                     </Text>
                   </View>
-                </View>
+                  <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
+                </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.logoutButton}
                   onPress={handleLogout}
