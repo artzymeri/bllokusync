@@ -622,7 +622,11 @@ exports.getTenantPropertyReports = async (req, res) => {
     const whereClause = {
       property_id: {
         [Op.in]: propertyIds
-      }
+      },
+      [Op.or]: [
+        { archived: false },
+        { archived: null }
+      ]
     };
 
     if (year) {
@@ -649,8 +653,11 @@ exports.getTenantPropertyReports = async (req, res) => {
       reports
     });
   } catch (error) {
-    console.error('Get tenant property reports error:', error);
-    res.status(500).json({ message: 'Error fetching reports', error: error.message });
+    console.error('Error fetching tenant property reports:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching tenant property reports'
+    });
   }
 };
 

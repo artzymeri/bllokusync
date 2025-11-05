@@ -55,7 +55,13 @@ exports.getTenantComplaints = async (req, res) => {
     const tenant_user_id = req.user.id;
 
     const complaints = await Complaint.findAll({
-      where: { tenant_user_id },
+      where: {
+        tenant_user_id,
+        [Op.or]: [
+          { archived: false },
+          { archived: null }
+        ]
+      },
       include: [
         { model: Property, as: 'property' }
       ],
