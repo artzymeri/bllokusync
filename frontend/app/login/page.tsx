@@ -14,9 +14,16 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Home as HomeIcon, Mail, Phone } from "lucide-react";
+import { Home as HomeIcon, Mail, Phone, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import Image from "next/image";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 // Futuristic Background Component
 const FuturisticBackground = () => {
@@ -100,6 +107,7 @@ export default function LoginPage() {
     password: "",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -223,7 +231,6 @@ export default function LoginPage() {
 
         <Card className="border-blue-500/30 shadow-2xl bg-slate-900/80 backdrop-blur-xl">
           <CardHeader>
-            <CardTitle className="text-white">Hyrje</CardTitle>
             <CardDescription className="text-blue-200">
               Vendosni kredencialet tuaja për të hyrë në llogarinë tuaj
             </CardDescription>
@@ -322,7 +329,62 @@ export default function LoginPage() {
             </form>
           </CardContent>
         </Card>
+
+        {/* Help Button */}
+        <div className="mt-6 flex justify-center">
+          <button
+            onClick={() => setContactOpen(true)}
+            className="group relative px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 hover:border-blue-400/50 backdrop-blur-sm transition-all duration-300 hover:scale-105"
+          >
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/0 to-purple-500/0 group-hover:from-blue-500/10 group-hover:to-purple-500/10 transition-all duration-300" />
+            <div className="relative flex items-center gap-2">
+              <HelpCircle className="w-5 h-5 text-blue-400 group-hover:text-blue-300 transition-colors" />
+              <span className="text-white font-medium">Ju duhet ndihmë?</span>
+            </div>
+          </button>
+        </div>
       </div>
+
+      {/* Contact Modal */}
+      <Dialog open={contactOpen} onOpenChange={setContactOpen}>
+        <DialogContent className="sm:max-w-[400px] bg-gradient-to-br from-slate-900 to-slate-800 text-white border-white/10">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+              Kontaktoni
+            </DialogTitle>
+            <DialogDescription className="text-gray-300 pt-4">
+              Lidhuni me ekipin tonë
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6 py-4">
+            <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0">
+                <Phone className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 mb-1">Numri i Telefonit</p>
+                <a
+                  href="tel:+38346131908"
+                  className="text-lg font-semibold text-white hover:text-purple-400 transition-colors"
+                >
+                  +383 46 131 908
+                </a>
+              </div>
+            </div>
+            <p className="text-sm text-gray-400 text-center">
+              Ekipi ynë i mbështetjes është i disponueshëm për t'ju ndihmuar me çdo pyetje apo shqetësim.
+            </p>
+          </div>
+          <div className="flex justify-end pt-2">
+            <Button
+              onClick={() => setContactOpen(false)}
+              className="bg-white text-black hover:bg-gray-100"
+            >
+              Mbyll
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
