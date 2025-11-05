@@ -11,7 +11,7 @@ class TenantService {
       if (params.month) queryParams.append('month', params.month);
 
       const queryString = queryParams.toString();
-      const endpoint = `/api/tenant/dashboard${queryString ? `?${queryString}` : ''}`;
+      const endpoint = `/api/tenant-dashboard${queryString ? `?${queryString}` : ''}`;
       
       const response = await apiFetch(endpoint);
       
@@ -45,4 +45,3 @@ class TenantService {
 }
 
 export default new TenantService();
-

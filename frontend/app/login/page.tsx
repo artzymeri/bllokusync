@@ -224,9 +224,6 @@ export default function LoginPage() {
           <h1 className="text-4xl font-bold text-slate-900 mb-2">
             Mirë se vini përsëri
           </h1>
-          <p className="text-slate-700">
-            Hyni për të aksesuar portalin tuaj të apartamentit
-          </p>
         </div>
 
         <Card className="border-blue-200 shadow-2xl bg-white/90 backdrop-blur-xl">

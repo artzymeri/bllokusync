@@ -44,7 +44,7 @@ const TenantScreen = ({ user, onLogout, onUpdateUser }) => {
   const renderScreen = () => {
     switch (currentRoute) {
       case 'dashboard':
-        return <TenantDashboardScreen user={user} />;
+        return <TenantDashboardScreen user={user} onNavigate={handleNavigate} />;
       case 'payments':
         return <TenantPaymentsScreen user={user} />;
       case 'reports':
@@ -58,12 +58,12 @@ const TenantScreen = ({ user, onLogout, onUpdateUser }) => {
         return hasMonthlyReportsAccess ? (
           <TenantMonthlyReportsScreen hasAccess={hasMonthlyReportsAccess} />
         ) : (
-          <TenantDashboardScreen user={user} />
+          <TenantDashboardScreen user={user} onNavigate={handleNavigate} />
         );
       case 'settings':
         return <TenantSettingsScreen user={user} onUpdateUser={onUpdateUser} />;
       default:
-        return <TenantDashboardScreen user={user} />;
+        return <TenantDashboardScreen user={user} onNavigate={handleNavigate} />;
     }
   };
 

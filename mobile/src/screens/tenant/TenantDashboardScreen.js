@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,17 +6,82 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import TenantService from '../../services/tenant.service';
 
-const TenantDashboardScreen = ({ user }) => {
-  const [refreshing, setRefreshing] = React.useState(false);
+const TenantDashboardScreen = ({ user, onNavigate }) => {
+  const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState(null);
 
-  const onRefresh = React.useCallback(() => {
+  // Get current year and month
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth() + 1;
+
+  // Fetch dashboard data
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      const response = await TenantService.getTenantDashboardData({ year: currentYear });
+      if (response.success) {
+        setDashboardData(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [currentYear]);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
+
+  const onRefresh = useCallback(() => {
     setRefreshing(true);
-    // TODO: Fetch dashboard data
-    setTimeout(() => setRefreshing(false), 2000);
-  }, []);
+    fetchDashboardData();
+  }, [fetchDashboardData]);
+
+  // Get current month payment
+  const getCurrentMonthPayment = () => {
+    if (!dashboardData?.payments) return null;
+    
+    return dashboardData.payments.find(p => {
+      const paymentDate = new Date(p.payment_month);
+      return paymentDate.getMonth() + 1 === currentMonth && 
+             paymentDate.getFullYear() === currentYear;
+    });
+  };
+
+  // Format currency
+  const formatCurrency = (amount) => {
+    const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+    return `€${numAmount.toFixed(2)}`;
+  };
+
+  // Format date
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  // Get current month name in Albanian
+  const getMonthName = () => {
+    const months = [
+      'Janar', 'Shkurt', 'Mars', 'Prill', 'Maj', 'Qershor',
+      'Korrik', 'Gusht', 'Shtator', 'Tetor', 'Nëntor', 'Dhjetor'
+    ];
+    return `${months[currentMonth - 1]} ${currentYear}`;
+  };
+
+  const currentMonthPayment = getCurrentMonthPayment();
 
   const InfoCard = ({ icon, iconColor, title, value, status, statusColor }) => (
     <View style={styles.infoCard}>
@@ -48,12 +113,21 @@ const TenantDashboardScreen = ({ user }) => {
     </TouchableOpacity>
   );
 
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#059669" />
+        <Text style={styles.loadingText}>Duke ngarkuar...</Text>
+      </View>
+    );
+  }
+
   return (
     <ScrollView
       style={styles.container}
       contentContainerStyle={styles.contentContainer}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#059669']} />
       }
     >
       {/* Welcome Section */}
@@ -70,10 +144,26 @@ const TenantDashboardScreen = ({ user }) => {
         <InfoCard
           icon="cash-outline"
           iconColor="#059669"
-          title="Pagesa e Këtij Muaji"
-          value="€0.00"
-          status="I papaguar"
-          statusColor="#dc2626"
+          title={`Pagesa për ${getMonthName()}`}
+          value={currentMonthPayment ? formatCurrency(currentMonthPayment.amount) : '€0.00'}
+          status={
+            currentMonthPayment 
+              ? currentMonthPayment.status === 'paid' 
+                ? `Paguar më ${formatDate(currentMonthPayment.payment_date)}`
+                : currentMonthPayment.status === 'overdue'
+                ? 'E vonuar'
+                : 'I papaguar'
+              : 'Nuk ka të dhëna'
+          }
+          statusColor={
+            currentMonthPayment
+              ? currentMonthPayment.status === 'paid'
+                ? '#059669'
+                : currentMonthPayment.status === 'overdue'
+                ? '#dc2626'
+                : '#f59e0b'
+              : '#64748b'
+          }
         />
         <InfoCard
           icon="home-outline"
@@ -91,24 +181,28 @@ const TenantDashboardScreen = ({ user }) => {
           title="Raportet"
           description="Raporto një problem në apartamentin tuaj"
           color="#ef4444"
+          onPress={() => onNavigate && onNavigate('reports')}
         />
         <QuickActionCard
           icon="cash-outline"
           title="Shiko Pagesat"
           description="Historiku i pagesave dhe detajet"
           color="#059669"
+          onPress={() => onNavigate && onNavigate('payments')}
         />
         <QuickActionCard
           icon="chatbox-outline"
           title="Ankesat"
           description="Dërgo një ankesë te menaxheri"
           color="#f59e0b"
+          onPress={() => onNavigate && onNavigate('complaints')}
         />
         <QuickActionCard
           icon="bulb-outline"
           title="Sugjerimet"
           description="Ndaj mendimet dhe idetë tuaja"
           color="#8b5cf6"
+          onPress={() => onNavigate && onNavigate('suggestions')}
         />
       </View>
     </ScrollView>
@@ -231,6 +325,17 @@ const styles = StyleSheet.create({
   },
   quickActionDescription: {
     fontSize: 13,
+    color: '#64748b',
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f8fafc',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
     color: '#64748b',
   },
 });
