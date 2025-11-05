@@ -63,7 +63,7 @@ export function TenantLayout({ children, title = "My Apartment" }: { children: R
           <h3 className="text-sm sm:text-base">BllokuSync</h3>
         </div>
         <Badge variant="secondary" className="ml-auto bg-emerald-100 text-emerald-800 text-xs">
-          Tenant
+          Banorë
         </Badge>
       </div>
       <ScrollArea className="flex-1 px-3 py-4">

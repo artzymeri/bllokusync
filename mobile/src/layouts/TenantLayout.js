@@ -125,9 +125,6 @@ const TenantLayout = ({ children, currentRoute, onNavigate, user, onLogout }) =>
               <View style={styles.sidebarHeader}>
                 <View style={styles.sidebarHeaderContent}>
                   <Text style={styles.sidebarTitle}>BllokuSync</Text>
-                  <View style={styles.sidebarBadge}>
-                    <Text style={styles.sidebarBadgeText}>Tenant</Text>
-                  </View>
                 </View>
                 <TouchableOpacity
                   onPress={() => setMenuVisible(false)}
@@ -289,17 +286,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#fff',
     marginRight: 8,
-  },
-  sidebarBadge: {
-    backgroundColor: '#d1fae5',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  sidebarBadgeText: {
-    color: '#065f46',
-    fontSize: 11,
-    fontWeight: '700',
   },
   closeButton: {
     padding: 4,
