@@ -8,7 +8,7 @@ export function useTenantMonthlyReportsAccess() {
   const { data, isLoading } = useTenantDashboard();
 
   // Check if tenant has access to any monthly reports
-  const hasAccess = data?.data?.monthlyReports && data.data.monthlyReports.length > 0;
+  const hasAccess = data?.monthlyReports && data.monthlyReports.length > 0;
 
   return {
     hasAccess: hasAccess || false,
