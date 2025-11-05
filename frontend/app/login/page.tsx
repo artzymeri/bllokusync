@@ -29,16 +29,16 @@ import {
 const FuturisticBackground = () => {
   return (
     <div className="absolute inset-0 overflow-hidden">
-      {/* Gradient Base */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900" />
+      {/* Gradient Base - Light Theme */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-slate-50" />
 
       {/* Animated Grid */}
       <div
-        className="absolute inset-0 opacity-20"
+        className="absolute inset-0 opacity-30"
         style={{
           backgroundImage: `
-            linear-gradient(to right, rgba(59, 130, 246, 0.3) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(59, 130, 246, 0.3) 1px, transparent 1px)
+            linear-gradient(to right, rgba(59, 130, 246, 0.2) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(59, 130, 246, 0.2) 1px, transparent 1px)
           `,
           backgroundSize: "50px 50px",
           animation: "gridScroll 20s linear infinite",
@@ -47,11 +47,11 @@ const FuturisticBackground = () => {
 
       {/* Secondary Grid */}
       <div
-        className="absolute inset-0 opacity-10"
+        className="absolute inset-0 opacity-15"
         style={{
           backgroundImage: `
-            linear-gradient(to right, rgba(147, 197, 253, 0.5) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(147, 197, 253, 0.5) 1px, transparent 1px)
+            linear-gradient(to right, rgba(147, 51, 234, 0.3) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(147, 51, 234, 0.3) 1px, transparent 1px)
           `,
           backgroundSize: "100px 100px",
           animation: "gridScroll 30s linear infinite reverse",
@@ -62,7 +62,7 @@ const FuturisticBackground = () => {
       {[...Array(20)].map((_, i) => (
         <div
           key={i}
-          className="absolute rounded-full bg-blue-400"
+          className="absolute rounded-full bg-blue-500"
           style={{
             width: Math.random() * 4 + 2 + "px",
             height: Math.random() * 4 + 2 + "px",
@@ -70,18 +70,18 @@ const FuturisticBackground = () => {
             top: Math.random() * 100 + "%",
             animation: `float ${Math.random() * 10 + 10}s ease-in-out infinite`,
             animationDelay: `${Math.random() * 5}s`,
-            opacity: Math.random() * 0.5 + 0.2,
+            opacity: Math.random() * 0.3 + 0.1,
           }}
         />
       ))}
 
       {/* Glowing Orbs */}
       <div
-        className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500 rounded-full filter blur-3xl opacity-20 animate-pulse"
+        className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-300 rounded-full filter blur-3xl opacity-20 animate-pulse"
         style={{ animationDuration: "4s" }}
       />
       <div
-        className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500 rounded-full filter blur-3xl opacity-20 animate-pulse"
+        className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-300 rounded-full filter blur-3xl opacity-20 animate-pulse"
         style={{ animationDuration: "6s", animationDelay: "2s" }}
       />
 
@@ -90,7 +90,7 @@ const FuturisticBackground = () => {
         className="absolute inset-0 opacity-5"
         style={{
           backgroundImage:
-            "linear-gradient(to bottom, transparent 50%, rgba(255, 255, 255, 0.1) 50%)",
+            "linear-gradient(to bottom, transparent 50%, rgba(59, 130, 246, 0.1) 50%)",
           backgroundSize: "100% 4px",
           animation: "scanline 10s linear infinite",
         }}
@@ -217,21 +217,22 @@ export default function LoginPage() {
               height={10}
               className="h-8 w-auto"
               priority
-              style={{ filter: "brightness(100%) invert(1)" }}
+              style={{ filter: "brightness(0%)" }}
             />
-            <h1 className="font-bold text-xl text-white">BllokuSync</h1>
+            <h1 className="font-bold text-xl text-slate-900">BllokuSync</h1>
           </Link>
-          <h1 className="text-4xl font-bold text-white mb-2">
+          <h1 className="text-4xl font-bold text-slate-900 mb-2">
             Mirë se vini përsëri
           </h1>
-          <p className="text-blue-200">
+          <p className="text-slate-700">
             Hyni për të aksesuar portalin tuaj të apartamentit
           </p>
         </div>
 
-        <Card className="border-blue-500/30 shadow-2xl bg-slate-900/80 backdrop-blur-xl">
+        <Card className="border-blue-200 shadow-2xl bg-white/90 backdrop-blur-xl">
           <CardHeader>
-            <CardDescription className="text-blue-200">
+            <CardTitle className="text-slate-900">Hyrje</CardTitle>
+            <CardDescription className="text-slate-600">
               Vendosni kredencialet tuaja për të hyrë në llogarinë tuaj
             </CardDescription>
           </CardHeader>
@@ -270,7 +271,7 @@ export default function LoginPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="identifier" className="text-white">
+                <Label htmlFor="identifier" className="text-slate-900">
                   {loginMethod === "email" ? "Email" : "Numri i Telefonit"}
                 </Label>
                 <Input
@@ -292,7 +293,7 @@ export default function LoginPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-white">Fjalëkalimi</Label>
+                <Label htmlFor="password" className="text-slate-900">Fjalëkalimi</Label>
                 <Input
                   id="password"
                   name="password"
@@ -317,12 +318,20 @@ export default function LoginPage() {
 
               <div className="text-center text-sm space-y-2">
                 <div>
-                  <span className="text-slate-300">Nuk keni një llogari? </span>
+                  <span className="text-slate-600">Nuk keni një llogari? </span>
                   <Link
                     href="/register"
-                    className="text-blue-400 hover:text-blue-300 font-medium"
+                    className="text-blue-600 hover:text-blue-700 font-medium"
                   >
                     Regjistrohuni këtu
+                  </Link>
+                </div>
+                <div>
+                  <Link
+                    href="/forgot-password"
+                    className="text-slate-600 hover:text-slate-700"
+                  >
+                    Keni harruar fjalëkalimin?
                   </Link>
                 </div>
               </div>
@@ -334,12 +343,12 @@ export default function LoginPage() {
         <div className="mt-6 flex justify-center">
           <button
             onClick={() => setContactOpen(true)}
-            className="group relative px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 hover:border-blue-400/50 backdrop-blur-sm transition-all duration-300 hover:scale-105"
+            className="group relative px-6 py-3 rounded-xl bg-gradient-to-r from-blue-100 to-purple-100 border border-blue-300 hover:border-blue-400 backdrop-blur-sm transition-all duration-300 hover:scale-105 shadow-lg"
           >
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/0 to-purple-500/0 group-hover:from-blue-500/10 group-hover:to-purple-500/10 transition-all duration-300" />
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-200/0 to-purple-200/0 group-hover:from-blue-200/30 group-hover:to-purple-200/30 transition-all duration-300" />
             <div className="relative flex items-center gap-2">
-              <HelpCircle className="w-5 h-5 text-blue-400 group-hover:text-blue-300 transition-colors" />
-              <span className="text-white font-medium">Ju duhet ndihmë?</span>
+              <HelpCircle className="w-5 h-5 text-blue-600 group-hover:text-blue-700 transition-colors" />
+              <span className="text-slate-900 font-medium">Ju duhet ndihmë?</span>
             </div>
           </button>
         </div>
