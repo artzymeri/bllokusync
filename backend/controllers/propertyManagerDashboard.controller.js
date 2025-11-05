@@ -55,7 +55,11 @@ exports.getPropertyManagerDashboardData = async (req, res) => {
     const pendingReports = await Report.findAll({
       where: {
         property_id: { [Op.in]: propertyIds },
-        status: { [Op.in]: ['pending', 'in_progress'] }
+        status: { [Op.in]: ['pending', 'in_progress'] },
+        [Op.or]: [
+          { archived: false },
+          { archived: null }
+        ]
       },
       include: [
         {
@@ -77,7 +81,11 @@ exports.getPropertyManagerDashboardData = async (req, res) => {
     const recentComplaints = await Complaint.findAll({
       where: {
         property_id: { [Op.in]: propertyIds },
-        status: { [Op.in]: ['pending', 'in_progress'] }
+        status: { [Op.in]: ['pending', 'in_progress'] },
+        [Op.or]: [
+          { archived: false },
+          { archived: null }
+        ]
       },
       include: [
         {
@@ -99,7 +107,11 @@ exports.getPropertyManagerDashboardData = async (req, res) => {
     const recentSuggestions = await Suggestion.findAll({
       where: {
         property_id: { [Op.in]: propertyIds },
-        status: 'pending'
+        status: 'pending',
+        [Op.or]: [
+          { archived: false },
+          { archived: null }
+        ]
       },
       include: [
         {
@@ -184,7 +196,11 @@ exports.getPropertyManagerDashboardData = async (req, res) => {
     // Calculate report statistics
     const reportStats = await Report.findAll({
       where: {
-        property_id: { [Op.in]: propertyIds }
+        property_id: { [Op.in]: propertyIds },
+        [Op.or]: [
+          { archived: false },
+          { archived: null }
+        ]
       },
       attributes: [
         'status',
@@ -206,7 +222,11 @@ exports.getPropertyManagerDashboardData = async (req, res) => {
     // Calculate complaint statistics
     const complaintStats = await Complaint.findAll({
       where: {
-        property_id: { [Op.in]: propertyIds }
+        property_id: { [Op.in]: propertyIds },
+        [Op.or]: [
+          { archived: false },
+          { archived: null }
+        ]
       },
       attributes: [
         'status',

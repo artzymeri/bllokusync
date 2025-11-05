@@ -159,7 +159,10 @@ exports.getPropertyManagerReports = async (req, res) => {
     // Build where clause
     const whereClause = {
       property_id: { [Op.in]: managedPropertyIds },
-      archived: false // Exclude archived reports by default
+      [Op.or]: [
+        { archived: false },
+        { archived: null }
+      ]
     };
 
     if (property_id) {

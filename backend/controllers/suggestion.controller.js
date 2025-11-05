@@ -128,7 +128,10 @@ exports.getPropertyManagerSuggestions = async (req, res) => {
     // Build where clause
     const whereClause = {
       property_id: { [Op.in]: managedPropertyIds },
-      archived: false // Exclude archived suggestions by default
+      [Op.or]: [
+        { archived: false },
+        { archived: null }
+      ]
     };
 
     if (property_id) {
@@ -265,10 +268,11 @@ exports.archiveSuggestions = async (req, res) => {
     await Suggestion.update(
       { archived: true },
       {
-        where: {
-          id: { [Op.in]: ids },
-          property_id: { [Op.in]: managedPropertyIds }
-        }
+        where:
+          {
+            id: { [Op.in]: ids },
+            property_id: { [Op.in]: managedPropertyIds }
+          }
       }
     );
 

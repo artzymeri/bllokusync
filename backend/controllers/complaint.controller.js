@@ -128,7 +128,10 @@ exports.getPropertyManagerComplaints = async (req, res) => {
     // Build where clause
     const whereClause = {
       property_id: { [Op.in]: managedPropertyIds },
-      archived: false // Exclude archived complaints by default
+      [Op.or]: [
+        { archived: false },
+        { archived: null }
+      ]
     };
 
     if (property_id) {
