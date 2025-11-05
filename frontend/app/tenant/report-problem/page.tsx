@@ -202,10 +202,20 @@ export default function ReportProblemPage() {
     }
   };
 
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('sq-AL', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   if (fetchingData) {
     return (
       <ProtectedRoute allowedRoles={["tenant"]}>
-        <TenantLayout title="Raporto Problem">
+        <TenantLayout title="Raportimet">
           <div className="flex items-center justify-center h-64">
             <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
           </div>
@@ -216,7 +226,7 @@ export default function ReportProblemPage() {
 
   return (
     <ProtectedRoute allowedRoles={["tenant"]}>
-      <TenantLayout title="Raporto Problem">
+      <TenantLayout title="Raportimet">
         <div className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2">
             {/* Report Form */}
@@ -224,10 +234,10 @@ export default function ReportProblemPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <AlertTriangle className="h-5 w-5 text-emerald-600" />
-                  Raport i Ri
+                  Raporto Problem
                 </CardTitle>
                 <CardDescription>
-                  Plotësoni formularin më poshtë për të raportuar një problem
+                  Raportoni një problem për pronën tuaj
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -254,7 +264,7 @@ export default function ReportProblemPage() {
 
                   {selectedProperty && selectedProperty.problemOptions.length > 0 && (
                     <div className="space-y-2">
-                      <Label htmlFor="problem">Lloji i Problemit *</Label>
+                      <Label htmlFor="problem">Lloji i Problemit</Label>
                       <Select value={selectedProblem} onValueChange={setSelectedProblem}>
                         <SelectTrigger id="problem">
                           <SelectValue placeholder="Zgjidhni llojin e problemit" />
@@ -308,51 +318,98 @@ export default function ReportProblemPage() {
               </CardContent>
             </Card>
 
-            {/* My Reports */}
+            {/* Info Card */}
             <Card>
               <CardHeader>
-                <CardTitle>Raportet e Mia</CardTitle>
-                <CardDescription>Ndiqni raportet tuaja të dërguara</CardDescription>
+                <CardTitle>Rreth Raportimeve</CardTitle>
+                <CardDescription>Si funksionon procesi i raportimit</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4 max-h-[500px] overflow-y-auto">
-                  {myReports.length === 0 ? (
-                    <p className="text-sm text-slate-500 text-center py-8">
-                      Nuk ka raporte të dërguara ende
-                    </p>
-                  ) : (
-                    myReports.map((report) => (
-                      <div
-                        key={report.id}
-                        className="p-4 border border-slate-200 rounded-lg space-y-2"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <p className="font-medium text-slate-900">
-                              {report.problemOption.title}
-                            </p>
-                            <p className="text-sm text-slate-600">
-                              {report.property.name}
-                            </p>
-                            {report.floor && (
-                              <p className="text-xs text-slate-500">Kati {report.floor}</p>
-                            )}
-                          </div>
-                          {getStatusBadge(report.status)}
-                        </div>
-                        {report.description && (
-                          <p className="text-sm text-slate-600">{report.description}</p>
-                        )}
-                        <p className="text-xs text-slate-400">
-                          {new Date(report.created_at).toLocaleDateString('sq-AL')}
-                        </p>
-                      </div>
-                    ))
-                  )}
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm">Kur të raportoni një problem:</h4>
+                  <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                    <li>Probleme me objektet ose paisjet</li>
+                    <li>Nevoja për mirëmbajtje</li>
+                    <li>Shqetësime për sigurinë</li>
+                    <li>Probleme me infrastrukturën</li>
+                    <li>Çdo problem tjetër në pronë</li>
+                  </ul>
+                </div>
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm">Kuptimi i gjendjes:</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      {getStatusBadge("pending")}
+                      <span className="text-muted-foreground">Në pritje të shqyrtimit</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {getStatusBadge("in_progress")}
+                      <span className="text-muted-foreground">Po trajtohet</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {getStatusBadge("resolved")}
+                      <span className="text-muted-foreground">Problemi u zgjidh</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {getStatusBadge("rejected")}
+                      <span className="text-muted-foreground">Nuk mund të përpunohet</span>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           </div>
+
+          {/* My Reports */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Raportetimet e Mia</CardTitle>
+              <CardDescription>
+                Ndiqni gjendjen e raporteve tuaja të dërguara
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {myReports.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <AlertTriangle className="mx-auto h-12 w-12 mb-3 opacity-50" />
+                  <p>Nuk ka raporte të dërguara ende</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {myReports.map((report) => (
+                    <Card key={report.id}>
+                      <CardContent className="pt-6">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="space-y-1 flex-1">
+                            <h3 className="font-semibold">{report.problemOption.title}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {report.property.name}
+                            </p>
+                            {report.floor && (
+                              <p className="text-xs text-muted-foreground">
+                                Kati {report.floor}
+                              </p>
+                            )}
+                            {report.description && (
+                              <p className="text-sm text-muted-foreground mt-2">
+                                {report.description}
+                              </p>
+                            )}
+                          </div>
+                          <div className="ml-4">
+                            {getStatusBadge(report.status)}
+                          </div>
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-3">
+                          Dërguar më {formatDate(report.created_at)}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </TenantLayout>
     </ProtectedRoute>

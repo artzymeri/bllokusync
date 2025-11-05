@@ -188,7 +188,7 @@ export default function ComplaintsPage() {
   if (fetchingData) {
     return (
       <ProtectedRoute allowedRoles={["tenant"]}>
-        <TenantLayout title="Ankesat e Mia">
+        <TenantLayout title="Ankesat">
           <div className="flex items-center justify-center h-64">
             <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
           </div>
@@ -199,7 +199,7 @@ export default function ComplaintsPage() {
 
   return (
     <ProtectedRoute allowedRoles={["tenant"]}>
-      <TenantLayout title="Ankesat e Mia">
+      <TenantLayout title="Ankesat">
         <div className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2">
             {/* Complaint Form */}

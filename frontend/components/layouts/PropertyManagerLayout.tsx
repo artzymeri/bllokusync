@@ -42,7 +42,7 @@ const propertyManagerNavItems = [
   { href: "/property_manager/tenants", icon: Users, label: "Banorët" },
   { href: "/property_manager/payments", icon: Euro, label: "Pagesat" },
   { href: "/property_manager/monthly-reports", icon: BarChart3, label: "Raportet Mujore" },
-  { href: "/property_manager/reports", icon: FileText, label: "Raportet" },
+  { href: "/property_manager/reports", icon: FileText, label: "Raportimet" },
   { href: "/property_manager/complaints", icon: MessageSquare, label: "Ankesat" },
   { href: "/property_manager/suggestions", icon: Lightbulb, label: "Sugjerimet" },
   { href: "/property_manager/configurations", icon: SettingsIcon, label: "Konfigurimet" },
@@ -58,7 +58,7 @@ const getPageTitle = (pathname: string) => {
   if (pathname.startsWith("/property_manager/tenants")) return "Banorët";
   if (pathname.startsWith("/property_manager/payments")) return "Pagesat";
   if (pathname.startsWith("/property_manager/monthly-reports")) return "Raportet Mujore";
-  if (pathname.startsWith("/property_manager/reports")) return "Raportet";
+  if (pathname.startsWith("/property_manager/reports")) return "Raportimet";
   if (pathname.startsWith("/property_manager/complaints")) return "Ankesat";
   if (pathname.startsWith("/property_manager/suggestions")) return "Sugjerimet";
   if (pathname.startsWith("/property_manager/configurations")) return "Konfigurimet";

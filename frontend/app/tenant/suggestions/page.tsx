@@ -188,7 +188,7 @@ export default function SuggestionsPage() {
   if (fetchingData) {
     return (
       <ProtectedRoute allowedRoles={["tenant"]}>
-        <TenantLayout title="Sugjerimet e Mia">
+        <TenantLayout title="Sugjerimet">
           <div className="flex items-center justify-center h-64">
             <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
           </div>
@@ -199,7 +199,7 @@ export default function SuggestionsPage() {
 
   return (
     <ProtectedRoute allowedRoles={["tenant"]}>
-      <TenantLayout title="Sugjerimet e Mia">
+      <TenantLayout title="Sugjerimet">
         <div className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2">
             {/* Suggestion Form */}

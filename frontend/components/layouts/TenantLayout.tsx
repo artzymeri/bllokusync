@@ -36,7 +36,7 @@ import Image from "next/image";
 const tenantNavItems = [
   { href: "/tenant", icon: Home, label: "Paneli Kryesor" },
   { href: "/tenant/payments", icon: Euro, label: "Pagesat e Mia" },
-  { href: "/tenant/report-problem", icon: AlertTriangle, label: "Raporto Problemin" },
+  { href: "/tenant/report-problem", icon: AlertTriangle, label: "Raportimet" },
   { href: "/tenant/complaints", icon: MessageSquare, label: "Ankesat" },
   { href: "/tenant/suggestions", icon: Lightbulb, label: "Sugjerimet" },
   { href: "/tenant/monthly-reports", icon: FileText, label: "Raportet Mujore" },
