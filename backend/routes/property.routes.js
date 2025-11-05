@@ -18,8 +18,8 @@ router.get('/:id', propertyController.getPropertyById);
 // Create property (admin or property_manager can create)
 router.post('/', isAdminOrPropertyManager, propertyController.createProperty);
 
-// Update property (admin only)
-router.put('/:id', isAdmin, propertyController.updateProperty);
+// Update property (admin or assigned property_manager)
+router.put('/:id', isAdminOrPropertyManager, propertyController.updateProperty);
 
 // Delete property (admin or assigned property_manager)
 router.delete('/:id', isAdminOrPropertyManager, propertyController.deleteProperty);

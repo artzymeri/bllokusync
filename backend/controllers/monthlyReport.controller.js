@@ -622,11 +622,7 @@ exports.getTenantPropertyReports = async (req, res) => {
     const whereClause = {
       property_id: {
         [Op.in]: propertyIds
-      },
-      [Op.or]: [
-        { archived: false },
-        { archived: null }
-      ]
+      }
     };
 
     if (year) {

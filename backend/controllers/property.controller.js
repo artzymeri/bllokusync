@@ -270,13 +270,32 @@ exports.updateProperty = async (req, res) => {
     const { id } = req.params;
     const { name, address, city_id, latitude, longitude, floors_from, floors_to, manager_ids, show_monthly_reports_to_tenants } = req.body;
 
-    const property = await db.Property.findByPk(id);
+    const property = await db.Property.findByPk(id, {
+      include: [{
+        model: db.User,
+        as: 'managers',
+        attributes: ['id'],
+        through: { attributes: [] }
+      }]
+    });
 
     if (!property) {
       return res.status(404).json({
         success: false,
         message: 'Property not found'
       });
+    }
+
+    // If user is a property_manager, verify they're assigned to this property
+    if (req.user.role === 'property_manager') {
+      const isAssigned = property.managers.some(manager => manager.id === req.user.id);
+      
+      if (!isAssigned) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied. You can only edit properties you manage.'
+        });
+      }
     }
 
     // Validate floors_from if provided
