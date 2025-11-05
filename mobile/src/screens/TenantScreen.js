@@ -22,7 +22,7 @@ const TenantScreen = ({ user, onLogout }) => {
   const renderScreen = () => {
     switch (currentRoute) {
       case 'dashboard':
-        return <TenantDashboardScreen />;
+        return <TenantDashboardScreen user={user} />;
       case 'payments':
         return <TenantPaymentsScreen />;
       case 'report-problem':
@@ -34,7 +34,7 @@ const TenantScreen = ({ user, onLogout }) => {
       case 'monthly-reports':
         return <TenantMonthlyReportsScreen />;
       default:
-        return <TenantDashboardScreen />;
+        return <TenantDashboardScreen user={user} />;
     }
   };
 

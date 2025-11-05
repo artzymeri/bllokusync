@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const TenantDashboardScreen = () => {
+const TenantDashboardScreen = ({ user }) => {
   const [refreshing, setRefreshing] = React.useState(false);
 
   const onRefresh = React.useCallback(() => {
@@ -58,8 +58,10 @@ const TenantDashboardScreen = () => {
     >
       {/* Welcome Section */}
       <View style={styles.welcomeSection}>
-        <Text style={styles.welcomeText}>Mirë se vini në</Text>
-        <Text style={styles.welcomeTitle}>Panelin e Banorëve</Text>
+        <Text style={styles.welcomeText}>Mirë se vini</Text>
+        <Text style={styles.welcomeTitle}>
+          {user?.name} {user?.surname}
+        </Text>
       </View>
 
       {/* Overview Cards */}
@@ -77,7 +79,7 @@ const TenantDashboardScreen = () => {
           icon="home-outline"
           iconColor="#3b82f6"
           title="Apartamenti"
-          value="N/A"
+          value={user?.apartment_label || 'N/A'}
         />
       </View>
 
@@ -108,15 +110,6 @@ const TenantDashboardScreen = () => {
           description="Ndaj mendimet dhe idetë tuaja"
           color="#8b5cf6"
         />
-      </View>
-
-      {/* Recent Activity */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Aktiviteti i Fundit</Text>
-        <View style={styles.activityCard}>
-          <Ionicons name="time-outline" size={48} color="#cbd5e1" />
-          <Text style={styles.emptyText}>Asnjë aktivitet i fundit</Text>
-        </View>
       </View>
     </ScrollView>
   );
@@ -240,24 +233,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#64748b',
   },
-  activityCard: {
-    backgroundColor: '#fff',
-    padding: 40,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: '#94a3b8',
-    marginTop: 12,
-  },
 });
 
 export default TenantDashboardScreen;
-
