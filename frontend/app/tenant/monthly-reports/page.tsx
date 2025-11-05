@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, FileText, Calendar, Euro, AlertCircle, TrendingUp, Loader2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Download, FileText, Calendar, Euro, AlertCircle, TrendingUp, Loader2, Lock } from "lucide-react";
 import { useTenantPropertyReports } from "@/hooks/useMonthlyReports";
+import { useTenantMonthlyReportsAccess } from "@/hooks/useTenantMonthlyReportsAccess";
 import { generateMonthlyReportPDF } from "@/lib/pdf-generator";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
@@ -20,6 +22,7 @@ export default function TenantMonthlyReportsPage() {
   const [downloadingReportId, setDownloadingReportId] = useState<number | null>(null);
 
   const { data, isLoading, error } = useTenantPropertyReports({ year: selectedYear });
+  const { hasAccess, isLoading: isLoadingAccess } = useTenantMonthlyReportsAccess();
 
   const reports = data?.reports || [];
 
@@ -52,12 +55,40 @@ export default function TenantMonthlyReportsPage() {
     }).format(parseFloat(amount));
   };
 
-  if (isLoading) {
+  if (isLoadingAccess || isLoading) {
     return (
       <ProtectedRoute allowedRoles={["tenant"]}>
         <TenantLayout title="Raportet Mujore">
           <div className="flex items-center justify-center h-64">
             <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+          </div>
+        </TenantLayout>
+      </ProtectedRoute>
+    );
+  }
+
+  // Block access if tenant doesn't have permission
+  if (!hasAccess) {
+    return (
+      <ProtectedRoute allowedRoles={["tenant"]}>
+        <TenantLayout title="Raportet Mujore">
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <Card className="max-w-md">
+              <CardHeader className="text-center">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
+                  <Lock className="h-8 w-8 text-slate-600" />
+                </div>
+                <CardTitle className="text-xl">Aksesi i Kufizuar</CardTitle>
+                <CardDescription className="text-base">
+                  Menaxheri i pronës ka çaktivizuar aksesin në raportet mujore për këtë pronë.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="text-center">
+                <p className="text-sm text-slate-600">
+                  Nëse mendoni se ky është gabim, ju lutemi kontaktoni menaxherin e pronës.
+                </p>
+              </CardContent>
+            </Card>
           </div>
         </TenantLayout>
       </ProtectedRoute>

@@ -49,6 +49,7 @@ export function useCreateProperty() {
       longitude?: number | null;
       floors_from?: number | null;
       floors_to?: number | null;
+      show_monthly_reports_to_tenants?: boolean;
       manager_ids?: number[];
     }) => propertyAPI.createProperty(data),
     onSuccess: () => {
@@ -75,6 +76,7 @@ export function useUpdateProperty() {
         longitude?: number | null;
         floors_from?: number | null;
         floors_to?: number | null;
+        show_monthly_reports_to_tenants?: boolean;
         manager_ids?: number[];
       };
     }) => propertyAPI.updateProperty(id, data),

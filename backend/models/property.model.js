@@ -55,6 +55,13 @@ const Property = sequelize.define('Property', {
       max: 200
     }
   },
+  show_monthly_reports_to_tenants: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true,
+    field: 'show_monthly_reports_to_tenants',
+    comment: 'Controls whether tenants of this property can view monthly reports'
+  },
   property_manager_user_id: {
     type: DataTypes.INTEGER,
     allowNull: true,

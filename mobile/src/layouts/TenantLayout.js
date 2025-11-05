@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,19 +11,46 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AuthService from '../services/auth.service';
+import TenantService from '../services/tenant.service';
 
 const TenantLayout = ({ children, currentRoute, onNavigate, user, onLogout }) => {
   const [menuVisible, setMenuVisible] = useState(false);
+  const [hasMonthlyReportsAccess, setHasMonthlyReportsAccess] = useState(false);
 
-  const navigationItems = [
+  // Check monthly reports access when component mounts
+  useEffect(() => {
+    const checkAccess = async () => {
+      try {
+        const hasAccess = await TenantService.hasMonthlyReportsAccess();
+        setHasMonthlyReportsAccess(hasAccess);
+      } catch (error) {
+        console.error('Error checking monthly reports access:', error);
+        setHasMonthlyReportsAccess(false);
+      }
+    };
+
+    checkAccess();
+  }, []);
+
+  // Base navigation items
+  const baseNavigationItems = [
     { id: 'dashboard', icon: 'home', label: 'Paneli Kryesor', route: 'dashboard' },
     { id: 'payments', icon: 'cash', label: 'Pagesat e Mia', route: 'payments' },
     { id: 'reports', icon: 'alert-circle', label: 'Raportet', route: 'reports' },
     { id: 'complaints', icon: 'chatbox', label: 'Ankesat', route: 'complaints' },
     { id: 'suggestions', icon: 'bulb', label: 'Sugjerimet', route: 'suggestions' },
-    { id: 'monthly-reports', icon: 'document-text', label: 'Raportet Mujore', route: 'monthly-reports' },
-    { id: 'settings', icon: 'settings', label: 'Cilësimet', route: 'settings' },
   ];
+
+  // Conditionally add monthly reports if tenant has access
+  const navigationItems = hasMonthlyReportsAccess
+    ? [
+        ...baseNavigationItems,
+        { id: 'monthly-reports', icon: 'document-text', label: 'Raportet Mujore', route: 'monthly-reports' },
+      ]
+    : baseNavigationItems;
+
+  // Add settings at the end
+  navigationItems.push({ id: 'settings', icon: 'settings', label: 'Cilësimet', route: 'settings' });
 
   const handleLogout = () => {
     Alert.alert(
@@ -57,7 +84,12 @@ const TenantLayout = ({ children, currentRoute, onNavigate, user, onLogout }) =>
   };
 
   const getCurrentPageTitle = () => {
-    const item = navigationItems.find(item => item.route === currentRoute);
+    const allItems = [
+      ...baseNavigationItems,
+      { id: 'monthly-reports', icon: 'document-text', label: 'Raportet Mujore', route: 'monthly-reports' },
+      { id: 'settings', icon: 'settings', label: 'Cilësimet', route: 'settings' },
+    ];
+    const item = allItems.find(item => item.route === currentRoute);
     return item ? item.label : 'Paneli Kryesor';
   };
 

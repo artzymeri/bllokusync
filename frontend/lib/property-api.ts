@@ -28,6 +28,7 @@ export interface Property {
   longitude: number | null;
   floors_from: number | null;
   floors_to: number | null;
+  show_monthly_reports_to_tenants?: boolean;
   property_manager_user_id: number | null;
   manager?: {
     id: number;
@@ -96,6 +97,7 @@ class PropertyAPI {
     longitude?: number | null;
     floors_from?: number | null;
     floors_to?: number | null;
+    show_monthly_reports_to_tenants?: boolean;
     manager_ids?: number[];
   }) {
     const response = await apiFetch('/api/properties', {
@@ -114,6 +116,7 @@ class PropertyAPI {
     longitude?: number | null;
     floors_from?: number | null;
     floors_to?: number | null;
+    show_monthly_reports_to_tenants?: boolean;
     manager_ids?: number[];
   }) {
     const response = await apiFetch(`/api/properties/${id}`, {

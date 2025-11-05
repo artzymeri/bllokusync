@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { ArrowLeft, Save } from "lucide-react";
 import { toast } from "sonner";
 
@@ -29,6 +30,7 @@ export default function EditPropertyPage() {
     longitude: null as number | null,
     floors_from: null as number | null,
     floors_to: null as number | null,
+    show_monthly_reports_to_tenants: true,
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -53,6 +55,7 @@ export default function EditPropertyPage() {
         longitude: property.longitude,
         floors_from: property.floors_from,
         floors_to: property.floors_to,
+        show_monthly_reports_to_tenants: property.show_monthly_reports_to_tenants ?? true,
       });
 
       // Lock the map if coordinates already exist
@@ -89,6 +92,7 @@ export default function EditPropertyPage() {
           longitude: formData.longitude,
           floors_from: formData.floors_from,
           floors_to: formData.floors_to,
+          show_monthly_reports_to_tenants: formData.show_monthly_reports_to_tenants,
         },
       });
 
@@ -270,6 +274,25 @@ export default function EditPropertyPage() {
                     <p className="text-xs text-slate-600">
                       Specifikoni diapazonin e kateve për këtë pronë (nga -20 nëntokë deri në 200 mbi tokë)
                     </p>
+                  </div>
+
+                  <div className="flex items-center justify-between space-x-2 p-4 border border-slate-200 rounded-lg bg-slate-50">
+                    <div className="space-y-0.5 flex-1">
+                      <Label htmlFor="monthly-reports" className="text-sm font-medium">
+                        Raportet Mujore për Banorët
+                      </Label>
+                      <p className="text-xs text-slate-600">
+                        Lejoni banorët e kësaj prone të shohin raportet mujore
+                      </p>
+                    </div>
+                    <Switch
+                      id="monthly-reports"
+                      checked={formData.show_monthly_reports_to_tenants}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, show_monthly_reports_to_tenants: checked })
+                      }
+                      disabled={updateMutation.isPending}
+                    />
                   </div>
                 </CardContent>
               </Card>

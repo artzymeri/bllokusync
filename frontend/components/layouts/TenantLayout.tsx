@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTenantMonthlyReportsAccess } from "@/hooks/useTenantMonthlyReportsAccess";
 import {
   Home,
   MessageSquare,
@@ -33,24 +34,26 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
 
-const tenantNavItems = [
-  { href: "/tenant", icon: Home, label: "Paneli Kryesor" },
-  { href: "/tenant/payments", icon: Euro, label: "Pagesat e Mia" },
-  { href: "/tenant/report-problem", icon: AlertTriangle, label: "Raportimet" },
-  { href: "/tenant/complaints", icon: MessageSquare, label: "Ankesat" },
-  { href: "/tenant/suggestions", icon: Lightbulb, label: "Sugjerimet" },
-  { href: "/tenant/monthly-reports", icon: FileText, label: "Raportet Mujore" },
-];
-
 export function TenantLayout({ children, title = "My Apartment" }: { children: React.ReactNode; title?: string }) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const { hasAccess: hasMonthlyReportsAccess } = useTenantMonthlyReportsAccess();
 
   const handleLogout = async () => {
     await logout();
   };
+
+  // Filter nav items based on monthly reports access
+  const tenantNavItems = [
+    { href: "/tenant", icon: Home, label: "Paneli Kryesor" },
+    { href: "/tenant/payments", icon: Euro, label: "Pagesat e Mia" },
+    { href: "/tenant/report-problem", icon: AlertTriangle, label: "Raportimet" },
+    { href: "/tenant/complaints", icon: MessageSquare, label: "Ankesat" },
+    { href: "/tenant/suggestions", icon: Lightbulb, label: "Sugjerimet" },
+    ...(hasMonthlyReportsAccess ? [{ href: "/tenant/monthly-reports", icon: FileText, label: "Raportet Mujore" }] : []),
+  ];
 
   const Sidebar = ({ isMobile = false }: { isMobile?: boolean }) => (
     <div className="flex h-full flex-col bg-gradient-to-b from-emerald-700 to-emerald-600 text-slate-50">

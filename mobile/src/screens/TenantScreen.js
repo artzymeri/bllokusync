@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -12,11 +12,32 @@ import TenantComplaintsScreen from './tenant/TenantComplaintsScreen';
 import TenantSuggestionsScreen from './tenant/TenantSuggestionsScreen';
 import TenantMonthlyReportsScreen from './tenant/TenantMonthlyReportsScreen';
 import TenantSettingsScreen from './tenant/TenantSettingsScreen';
+import TenantService from '../services/tenant.service';
 
 const TenantScreen = ({ user, onLogout, onUpdateUser }) => {
   const [currentRoute, setCurrentRoute] = useState('dashboard');
+  const [hasMonthlyReportsAccess, setHasMonthlyReportsAccess] = useState(false);
+
+  // Check monthly reports access when component mounts
+  useEffect(() => {
+    const checkAccess = async () => {
+      try {
+        const hasAccess = await TenantService.hasMonthlyReportsAccess();
+        setHasMonthlyReportsAccess(hasAccess);
+      } catch (error) {
+        console.error('Error checking monthly reports access:', error);
+        setHasMonthlyReportsAccess(false);
+      }
+    };
+
+    checkAccess();
+  }, []);
 
   const handleNavigate = (route) => {
+    // Prevent navigation to monthly reports if access is denied
+    if (route === 'monthly-reports' && !hasMonthlyReportsAccess) {
+      return;
+    }
     setCurrentRoute(route);
   };
 
@@ -33,7 +54,12 @@ const TenantScreen = ({ user, onLogout, onUpdateUser }) => {
       case 'suggestions':
         return <TenantSuggestionsScreen user={user} />;
       case 'monthly-reports':
-        return <TenantMonthlyReportsScreen />;
+        // Only show monthly reports if tenant has access
+        return hasMonthlyReportsAccess ? (
+          <TenantMonthlyReportsScreen hasAccess={hasMonthlyReportsAccess} />
+        ) : (
+          <TenantDashboardScreen user={user} />
+        );
       case 'settings':
         return <TenantSettingsScreen user={user} onUpdateUser={onUpdateUser} />;
       default:

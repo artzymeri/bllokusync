@@ -223,6 +223,7 @@ exports.createProperty = async (req, res) => {
       longitude: longitude || null,
       floors_from: floors_from !== undefined && floors_from !== null ? parseInt(floors_from) : null,
       floors_to: floors_to !== undefined && floors_to !== null ? parseInt(floors_to) : null,
+      show_monthly_reports_to_tenants: show_monthly_reports_to_tenants !== undefined ? show_monthly_reports_to_tenants : true,
       property_manager_user_id: null // Deprecated field, kept for backward compatibility
     });
 
@@ -267,7 +268,7 @@ exports.createProperty = async (req, res) => {
 exports.updateProperty = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, address, city_id, latitude, longitude, floors_from, floors_to, manager_ids } = req.body;
+    const { name, address, city_id, latitude, longitude, floors_from, floors_to, manager_ids, show_monthly_reports_to_tenants } = req.body;
 
     const property = await db.Property.findByPk(id);
 
@@ -348,7 +349,8 @@ exports.updateProperty = async (req, res) => {
       latitude: latitude !== undefined ? latitude : property.latitude,
       longitude: longitude !== undefined ? longitude : property.longitude,
       floors_from: floors_from !== undefined ? (floors_from !== null ? parseInt(floors_from) : null) : property.floors_from,
-      floors_to: floors_to !== undefined ? (floors_to !== null ? parseInt(floors_to) : null) : property.floors_to
+      floors_to: floors_to !== undefined ? (floors_to !== null ? parseInt(floors_to) : null) : property.floors_to,
+      show_monthly_reports_to_tenants: show_monthly_reports_to_tenants !== undefined ? show_monthly_reports_to_tenants : property.show_monthly_reports_to_tenants
     });
 
     // Update managers through junction table if provided

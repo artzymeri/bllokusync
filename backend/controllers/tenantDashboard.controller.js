@@ -111,7 +111,11 @@ exports.getTenantDashboardData = async (req, res) => {
           {
             model: Property,
             as: 'property',
-            attributes: ['id', 'name', 'address']
+            attributes: ['id', 'name', 'address', 'show_monthly_reports_to_tenants'],
+            where: {
+              show_monthly_reports_to_tenants: true
+            },
+            required: true
           }
         ],
         order: [['report_month', 'DESC']]
