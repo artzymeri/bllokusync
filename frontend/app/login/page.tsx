@@ -58,23 +58,6 @@ const FuturisticBackground = () => {
         }}
       />
 
-      {/* Floating Dots */}
-      {[...Array(20)].map((_, i) => (
-        <div
-          key={i}
-          className="absolute rounded-full bg-blue-500"
-          style={{
-            width: Math.random() * 4 + 2 + "px",
-            height: Math.random() * 4 + 2 + "px",
-            left: Math.random() * 100 + "%",
-            top: Math.random() * 100 + "%",
-            animation: `float ${Math.random() * 10 + 10}s ease-in-out infinite`,
-            animationDelay: `${Math.random() * 5}s`,
-            opacity: Math.random() * 0.3 + 0.1,
-          }}
-        />
-      ))}
-
       {/* Glowing Orbs */}
       <div
         className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-300 rounded-full filter blur-3xl opacity-20 animate-pulse"
