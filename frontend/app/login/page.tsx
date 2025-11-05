@@ -343,7 +343,7 @@ export default function LoginPage() {
         <div className="mt-6 flex justify-center">
           <button
             onClick={() => setContactOpen(true)}
-            className="group relative px-6 py-3 rounded-xl bg-gradient-to-r from-blue-100 to-purple-100 border border-blue-300 hover:border-blue-400 backdrop-blur-sm transition-all duration-300 hover:scale-105 shadow-lg"
+            className="cursor-pointer group relative px-6 py-3 rounded-xl bg-gradient-to-r from-blue-100 to-purple-100 border border-blue-300 hover:border-blue-400 backdrop-blur-sm transition-all duration-300 hover:scale-105 shadow-lg"
           >
             <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-200/0 to-purple-200/0 group-hover:from-blue-200/30 group-hover:to-purple-200/30 transition-all duration-300" />
             <div className="relative flex items-center gap-2">
