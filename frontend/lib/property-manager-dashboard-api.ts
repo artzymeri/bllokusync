@@ -12,10 +12,13 @@ export const getSidebarCounts = async () => {
       {
         headers: {
           Authorization: `Bearer ${token}`,
+          "Cache-Control": "no-cache",
+          Pragma: "no-cache",
         },
       }
     );
 
+    console.log("[Frontend] Sidebar counts response:", response.data.data);
     return response.data.data;
   } catch (error) {
     console.error("[PM Sidebar Counts] Error:", error);

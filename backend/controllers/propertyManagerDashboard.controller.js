@@ -444,7 +444,11 @@ exports.getSidebarCounts = async (req, res) => {
     const pendingReports = await Report.count({
       where: {
         property_id: { [Op.in]: propertyIds },
-        status: 'pending'
+        status: 'pending',
+        [Op.or]: [
+          { archived: false },
+          { archived: null }
+        ]
       }
     });
 
@@ -452,15 +456,34 @@ exports.getSidebarCounts = async (req, res) => {
     const pendingComplaints = await Complaint.count({
       where: {
         property_id: { [Op.in]: propertyIds },
-        status: 'pending'
+        status: 'pending',
+        [Op.or]: [
+          { archived: false },
+          { archived: null }
+        ]
       }
     });
+
+    // Debug: Log the actual complaints being counted
+    const complaintsDebug = await Complaint.findAll({
+      where: {
+        property_id: { [Op.in]: propertyIds },
+        status: 'pending'
+      },
+      attributes: ['id', 'title', 'status', 'archived', 'property_id']
+    });
+    console.log('[DEBUG] All pending complaints:', JSON.stringify(complaintsDebug.map(c => ({ id: c.id, title: c.title, archived: c.archived, status: c.status }))));
+    console.log('[DEBUG] Pending count (archived=false or null):', pendingComplaints);
 
     // Count pending suggestions
     const pendingSuggestions = await Suggestion.count({
       where: {
         property_id: { [Op.in]: propertyIds },
-        status: 'pending'
+        status: 'pending',
+        [Op.or]: [
+          { archived: false },
+          { archived: null }
+        ]
       }
     });
 

@@ -328,30 +328,30 @@ export default function PropertyManagerSuggestionsPage() {
                     </Button>
                   )}
                 </div>
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Select value={selectedProperty} onValueChange={setSelectedProperty}>
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full sm:w-[200px] h-9 md:h-10 text-xs md:text-sm">
                       <SelectValue placeholder="Të Gjitha Pronat" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Të Gjitha Pronat</SelectItem>
+                      <SelectItem value="all" className="text-xs md:text-sm">Të Gjitha Pronat</SelectItem>
                       {properties?.map((property) => (
-                        <SelectItem key={property.id} value={property.id.toString()}>
+                        <SelectItem key={property.id} value={property.id.toString()} className="text-xs md:text-sm">
                           {property.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                   <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full sm:w-[180px] h-9 md:h-10 text-xs md:text-sm">
                       <SelectValue placeholder="Të Gjitha Statuset" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Të Gjitha Statuset</SelectItem>
-                      <SelectItem value="pending">Në pritje</SelectItem>
-                      <SelectItem value="in_progress">Në progres</SelectItem>
-                      <SelectItem value="resolved">Implementuar</SelectItem>
-                      <SelectItem value="rejected">Refuzuar</SelectItem>
+                      <SelectItem value="all" className="text-xs md:text-sm">Të Gjitha Statuset</SelectItem>
+                      <SelectItem value="pending" className="text-xs md:text-sm">Në pritje</SelectItem>
+                      <SelectItem value="in_progress" className="text-xs md:text-sm">Në progres</SelectItem>
+                      <SelectItem value="resolved" className="text-xs md:text-sm">Implementuar</SelectItem>
+                      <SelectItem value="rejected" className="text-xs md:text-sm">Refuzuar</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

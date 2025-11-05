@@ -21,7 +21,7 @@ export function usePropertyManagerSidebarCounts() {
     queryKey: sidebarCountsKeys.all,
     queryFn: getSidebarCounts,
     enabled: !!user && user.role === 'property_manager', // Only fetch if user is logged in as property manager
-    staleTime: 5 * 60 * 1000, // Consider data stale after 5 minutes
+    staleTime: 0, // Always refetch when invalidated to ensure badge counts are up-to-date
     retry: 2,
   });
 }

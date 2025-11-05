@@ -45,6 +45,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { formatShortDate, formatDateTime } from "@/lib/utils";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { sidebarCountsKeys } from "@/hooks/usePropertyManagerSidebarCounts";
 
 export default function PropertyManagerReportsPage() {
   const [selectedProperty, setSelectedProperty] = useState<string>("all");
@@ -107,6 +108,8 @@ export default function PropertyManagerReportsPage() {
 
       // Refetch the reports
       queryClient.invalidateQueries({ queryKey: ['propertyManagerReports'] });
+      // Invalidate sidebar counts
+      queryClient.invalidateQueries({ queryKey: sidebarCountsKeys.all });
 
       toast.success(`${selectedIds.length} raport(e) u arkivuan me sukses`);
       setSelectedIds([]);

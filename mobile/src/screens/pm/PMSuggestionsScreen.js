@@ -291,42 +291,24 @@ const PMSuggestionsScreen = () => {
 
   return (
     <View style={styles.container}>
-      {/* Filter and Action Bar */}
-      <View style={styles.filterContainer}>
+      {/* Filter Bar */}
+      <View style={styles.topBar}>
         {suggestions.length > 0 && (
-          <View style={styles.actionBar}>
-            <TouchableOpacity
-              style={styles.selectAllButton}
-              onPress={handleSelectAll}
-            >
-              <View style={[styles.checkbox, selectedIds.length === suggestions.length && styles.checkboxChecked]}>
-                <View style={[styles.checkboxInner, selectedIds.length === suggestions.length && styles.checkboxChecked]}>
-                  {selectedIds.length === suggestions.length && (
-                    <Ionicons name="checkmark" size={16} color="#fff" />
-                  )}
-                </View>
-              </View>
-              <Text style={styles.selectAllText}>
-                {selectedIds.length === suggestions.length ? 'Çzgjidh të gjitha' : 'Zgjidh të gjitha'}
-              </Text>
-            </TouchableOpacity>
-            {selectedIds.length > 0 && (
-              <TouchableOpacity
-                style={[styles.archiveButton, archiving && styles.archiveButtonDisabled]}
-                onPress={handleArchiveSuggestions}
-                disabled={archiving}
-              >
-                {archiving ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <>
-                    <Ionicons name="archive-outline" size={18} color="#fff" />
-                    <Text style={styles.archiveButtonText}>Arkivo ({selectedIds.length})</Text>
-                  </>
+          <TouchableOpacity
+            style={styles.selectAllButton}
+            onPress={handleSelectAll}
+          >
+            <View style={[styles.checkbox, selectedIds.length === suggestions.length && styles.checkboxChecked]}>
+              <View style={[styles.checkboxInner, selectedIds.length === suggestions.length && styles.checkboxChecked]}>
+                {selectedIds.length === suggestions.length && (
+                  <Ionicons name="checkmark" size={16} color="#fff" />
                 )}
-              </TouchableOpacity>
-            )}
-          </View>
+              </View>
+            </View>
+            <Text style={styles.selectAllText}>
+              {selectedIds.length === suggestions.length ? 'Çzgjidh të gjitha' : 'Zgjidh të gjitha'}
+            </Text>
+          </TouchableOpacity>
         )}
         <TouchableOpacity
           style={styles.filterButton}
@@ -340,7 +322,7 @@ const PMSuggestionsScreen = () => {
       {/* Suggestions List */}
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, selectedIds.length > 0 && { paddingBottom: 100 }]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -364,6 +346,33 @@ const PMSuggestionsScreen = () => {
           suggestions.map((suggestion) => <SuggestionCard key={suggestion.id} suggestion={suggestion} />)
         )}
       </ScrollView>
+
+      {/* Floating Action Buttons */}
+      {selectedIds.length > 0 && (
+        <View style={styles.floatingButtonContainer}>
+          <TouchableOpacity
+            style={styles.cancelButton}
+            onPress={() => setSelectedIds([])}
+          >
+            <Ionicons name="close-outline" size={24} color="#64748b" />
+            <Text style={styles.cancelButtonText}>Anulo</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.floatingArchiveButton, archiving && styles.floatingArchiveButtonDisabled]}
+            onPress={handleArchiveSuggestions}
+            disabled={archiving}
+          >
+            {archiving ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <>
+                <Ionicons name="archive-outline" size={24} color="#fff" />
+                <Text style={styles.floatingArchiveButtonText}>Arkivo ({selectedIds.length})</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Filter Modal */}
       <Modal
@@ -575,23 +584,20 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8fafc',
   },
-  filterContainer: {
+  topBar: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    alignItems: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
   },
   actionBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    marginBottom: 12,
+    gap: 8,
   },
   selectAllButton: {
     flexDirection: 'row',
@@ -945,21 +951,74 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 4,
     borderWidth: 2,
-    borderColor: '#e2e8f0',
+    borderColor: '#d1d5db',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#fff',
   },
   checkboxInner: {
     width: 20,
     height: 20,
     borderRadius: 4,
-    backgroundColor: '#6366f1',
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
   },
   checkboxChecked: {
     borderColor: '#6366f1',
     backgroundColor: '#6366f1',
+  },
+  floatingButtonContainer: {
+    position: 'absolute',
+    bottom: 16,
+    left: 16,
+    right: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  cancelButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: '#f3f4f6',
+    flex: 1,
+    marginRight: 8,
+  },
+  cancelButtonText: {
+    color: '#1e293b',
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  floatingArchiveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: '#8b5cf6',
+    flex: 1,
+  },
+  floatingArchiveButtonDisabled: {
+    opacity: 0.5,
+  },
+  floatingArchiveButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 4,
   },
 });
 
