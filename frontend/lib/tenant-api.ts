@@ -122,3 +122,4 @@ export async function getTenantSuggestions(): Promise<Suggestion[]> {
   const data = await response.json();
   return data.suggestions;
 }
+

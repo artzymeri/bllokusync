@@ -127,7 +127,8 @@ exports.getPropertyManagerSuggestions = async (req, res) => {
 
     // Build where clause
     const whereClause = {
-      property_id: { [Op.in]: managedPropertyIds }
+      property_id: { [Op.in]: managedPropertyIds },
+      archived: false // Exclude archived suggestions by default
     };
 
     if (property_id) {
@@ -220,6 +221,108 @@ exports.updateSuggestionStatus = async (req, res) => {
   } catch (error) {
     console.error('Error updating suggestion status:', error);
     res.status(500).json({ message: 'Error updating suggestion status', error: error.message });
+  }
+};
+
+// Archive suggestions (Property Manager)
+exports.archiveSuggestions = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    const user_id = req.user.id;
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: 'Suggestion IDs are required' });
+    }
+
+    // Get user's managed properties
+    const user = await User.findByPk(user_id, {
+      include: [
+        {
+          model: Property,
+          as: 'managedPropertiesMany',
+          through: { attributes: [] }
+        }
+      ]
+    });
+
+    const managedPropertyIds = user.managedPropertiesMany.map(p => p.id);
+
+    // Get suggestions to verify ownership
+    const suggestions = await Suggestion.findAll({
+      where: {
+        id: { [Op.in]: ids }
+      }
+    });
+
+    // Verify all suggestions belong to managed properties
+    for (const suggestion of suggestions) {
+      if (!managedPropertyIds.includes(suggestion.property_id)) {
+        return res.status(403).json({ message: 'You do not manage all selected suggestions' });
+      }
+    }
+
+    // Archive the suggestions
+    await Suggestion.update(
+      { archived: true },
+      {
+        where: {
+          id: { [Op.in]: ids },
+          property_id: { [Op.in]: managedPropertyIds }
+        }
+      }
+    );
+
+    res.json({
+      message: `${ids.length} suggestion(s) archived successfully`,
+      count: ids.length
+    });
+  } catch (error) {
+    console.error('Error archiving suggestions:', error);
+    res.status(500).json({ message: 'Error archiving suggestions', error: error.message });
+  }
+};
+
+// Unarchive suggestions (Property Manager)
+exports.unarchiveSuggestions = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    const user_id = req.user.id;
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: 'Suggestion IDs are required' });
+    }
+
+    // Get user's managed properties
+    const user = await User.findByPk(user_id, {
+      include: [
+        {
+          model: Property,
+          as: 'managedPropertiesMany',
+          through: { attributes: [] }
+        }
+      ]
+    });
+
+    const managedPropertyIds = user.managedPropertiesMany.map(p => p.id);
+
+    // Unarchive the suggestions
+    await Suggestion.update(
+      { archived: false },
+      {
+        where: {
+          id: { [Op.in]: ids },
+          property_id: { [Op.in]: managedPropertyIds }
+        }
+      }
+    );
+
+    res.json({
+      message: `${ids.length} suggestion(s) unarchived successfully`,
+      count: ids.length
+    });
+  } catch (error) {
+    console.error('Error unarchiving suggestions:', error);
+    res.status(500).json({ message: 'Error unarchiving suggestions', error: error.message });
   }
 };
 

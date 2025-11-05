@@ -39,15 +39,21 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Building2, CheckCircle2, Clock, FileText, User, XCircle } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { AlertCircle, Building2, CheckCircle2, Clock, FileText, User, XCircle, Archive } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { formatShortDate, formatDateTime } from "@/lib/utils";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function PropertyManagerReportsPage() {
   const [selectedProperty, setSelectedProperty] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [newStatus, setNewStatus] = useState<string>("");
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [isArchiving, setIsArchiving] = useState(false);
+  const queryClient = useQueryClient();
 
   // Build query params
   const queryParams: Record<string, string | number> = {};
@@ -78,6 +84,37 @@ export default function PropertyManagerReportsPage() {
     } catch (err) {
       // Error is handled by the mutation
       console.error('Failed to update report status:', err);
+    }
+  };
+
+  const handleArchiveReports = async () => {
+    if (selectedIds.length === 0) return;
+
+    setIsArchiving(true);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/reports/archive`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ ids: selectedIds }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to archive reports');
+      }
+
+      // Refetch the reports
+      queryClient.invalidateQueries({ queryKey: ['propertyManagerReports'] });
+
+      toast.success(`${selectedIds.length} raport(e) u arkivuan me sukses`);
+      setSelectedIds([]);
+    } catch (err) {
+      console.error('Failed to archive reports:', err);
+      toast.error('Dështoi arkivimi i raporteve');
+    } finally {
+      setIsArchiving(false);
     }
   };
 
@@ -155,11 +192,25 @@ export default function PropertyManagerReportsPage() {
           <Card>
             <CardHeader>
               <div className="flex flex-col gap-3 md:gap-4">
-                <div>
-                  <CardTitle className="text-base md:text-lg">Pamja e Raporteve</CardTitle>
-                  <CardDescription className="text-xs md:text-sm">
-                    Menaxhoni dhe përgjigjuni raporteve të problemeve të banorëve
-                  </CardDescription>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-base md:text-lg">Pamja e Raporteve</CardTitle>
+                    <CardDescription className="text-xs md:text-sm">
+                      Menaxhoni dhe përgjigjuni raporteve të problemeve të banorëve
+                    </CardDescription>
+                  </div>
+                  {selectedIds.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleArchiveReports}
+                      disabled={isArchiving}
+                      className="flex items-center gap-2"
+                    >
+                      <Archive className="h-4 w-4" />
+                      Arkivo ({selectedIds.length})
+                    </Button>
+                  )}
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
                   <Select value={selectedProperty} onValueChange={setSelectedProperty}>
@@ -217,6 +268,18 @@ export default function PropertyManagerReportsPage() {
                     <Table>
                       <TableHeader>
                         <TableRow>
+                          <TableHead>
+                            <div className="flex items-center">
+                              <Checkbox
+                                checked={selectedIds.length === reports.length}
+                                onCheckedChange={(checked) => {
+                                  setSelectedIds(checked ? reports.map(report => report.id) : []);
+                                }}
+                                aria-label="Përzgjedh të gjitha"
+                                className="h-4 w-4 text-indigo-600"
+                              />
+                            </div>
+                          </TableHead>
                           <TableHead>ID</TableHead>
                           <TableHead>Prona</TableHead>
                           <TableHead>Banori</TableHead>
@@ -230,6 +293,18 @@ export default function PropertyManagerReportsPage() {
                       <TableBody>
                         {reports.map((report) => (
                           <TableRow key={report.id}>
+                            <TableCell className="font-medium">
+                              <Checkbox
+                                checked={selectedIds.includes(report.id)}
+                                onCheckedChange={(checked) => {
+                                  setSelectedIds((prev) => 
+                                    checked ? [...prev, report.id] : prev.filter(id => id !== report.id)
+                                  );
+                                }}
+                                aria-label={`Përzgjedh raportin #${report.id}`}
+                                className="h-4 w-4 text-indigo-600"
+                              />
+                            </TableCell>
                             <TableCell className="font-medium">#{report.id}</TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
@@ -445,6 +520,41 @@ export default function PropertyManagerReportsPage() {
                 disabled={updateReportMutation.isPending || !newStatus}
               >
                 {updateReportMutation.isPending ? "Duke ruajtur..." : "Ruaj Ndryshimet"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Archive Reports Confirmation Dialog */}
+        <Dialog open={selectedIds.length > 0 && isArchiving} onOpenChange={(open) => {
+          if (!open) {
+            setSelectedIds([]);
+            setIsArchiving(false);
+          }
+        }}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle className="text-base md:text-lg">Konfirmoni Arkivimin</DialogTitle>
+              <DialogDescription className="text-xs md:text-sm">
+                Jeni të sigurt që dëshironi të arkivoni këta raporte?
+              </DialogDescription>
+            </DialogHeader>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSelectedIds([]);
+                  setIsArchiving(false);
+                }}
+              >
+                Anulo
+              </Button>
+              <Button
+                onClick={handleArchiveReports}
+                disabled={isArchiving}
+              >
+                {isArchiving ? "Duke arkivuar..." : "Arkivo Raportet"}
               </Button>
             </DialogFooter>
           </DialogContent>

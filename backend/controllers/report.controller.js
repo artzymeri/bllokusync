@@ -158,7 +158,8 @@ exports.getPropertyManagerReports = async (req, res) => {
 
     // Build where clause
     const whereClause = {
-      property_id: { [Op.in]: managedPropertyIds }
+      property_id: { [Op.in]: managedPropertyIds },
+      archived: false // Exclude archived reports by default
     };
 
     if (property_id) {
@@ -253,5 +254,107 @@ exports.updateReportStatus = async (req, res) => {
   } catch (error) {
     console.error('Error updating report status:', error);
     res.status(500).json({ message: 'Error updating report status', error: error.message });
+  }
+};
+
+// Archive reports (Property Manager)
+exports.archiveReports = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    const user_id = req.user.id;
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: 'Report IDs are required' });
+    }
+
+    // Get user's managed properties
+    const user = await User.findByPk(user_id, {
+      include: [
+        {
+          model: Property,
+          as: 'managedPropertiesMany',
+          through: { attributes: [] }
+        }
+      ]
+    });
+
+    const managedPropertyIds = user.managedPropertiesMany.map(p => p.id);
+
+    // Get reports to verify ownership
+    const reports = await Report.findAll({
+      where: {
+        id: { [Op.in]: ids }
+      }
+    });
+
+    // Verify all reports belong to managed properties
+    for (const report of reports) {
+      if (!managedPropertyIds.includes(report.property_id)) {
+        return res.status(403).json({ message: 'You do not manage all selected reports' });
+      }
+    }
+
+    // Archive the reports
+    await Report.update(
+      { archived: true },
+      {
+        where: {
+          id: { [Op.in]: ids },
+          property_id: { [Op.in]: managedPropertyIds }
+        }
+      }
+    );
+
+    res.json({
+      message: `${ids.length} report(s) archived successfully`,
+      count: ids.length
+    });
+  } catch (error) {
+    console.error('Error archiving reports:', error);
+    res.status(500).json({ message: 'Error archiving reports', error: error.message });
+  }
+};
+
+// Unarchive reports (Property Manager)
+exports.unarchiveReports = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    const user_id = req.user.id;
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: 'Report IDs are required' });
+    }
+
+    // Get user's managed properties
+    const user = await User.findByPk(user_id, {
+      include: [
+        {
+          model: Property,
+          as: 'managedPropertiesMany',
+          through: { attributes: [] }
+        }
+      ]
+    });
+
+    const managedPropertyIds = user.managedPropertiesMany.map(p => p.id);
+
+    // Unarchive the reports
+    await Report.update(
+      { archived: false },
+      {
+        where: {
+          id: { [Op.in]: ids },
+          property_id: { [Op.in]: managedPropertyIds }
+        }
+      }
+    );
+
+    res.json({
+      message: `${ids.length} report(s) unarchived successfully`,
+      count: ids.length
+    });
+  } catch (error) {
+    console.error('Error unarchiving reports:', error);
+    res.status(500).json({ message: 'Error unarchiving reports', error: error.message });
   }
 };

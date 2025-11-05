@@ -35,7 +35,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Building2, CheckCircle2, Clock, Loader2, Lightbulb, User, XCircle } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { AlertCircle, Building2, CheckCircle2, Clock, Loader2, Lightbulb, User, XCircle, Archive } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -84,6 +85,8 @@ export default function PropertyManagerSuggestionsPage() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [isArchiving, setIsArchiving] = useState(false);
   const queryClient = useQueryClient();
 
   // Fetch suggestions
@@ -192,6 +195,38 @@ export default function PropertyManagerSuggestionsPage() {
     }
   };
 
+  const handleArchiveSuggestions = async () => {
+    if (selectedIds.length === 0) return;
+
+    setIsArchiving(true);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/suggestions/archive`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ ids: selectedIds }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to archive suggestions');
+      }
+
+      // Refetch the suggestions
+      setSuggestions(prevSuggestions => prevSuggestions.filter(s => !selectedIds.includes(s.id)));
+      queryClient.invalidateQueries({ queryKey: sidebarCountsKeys.all });
+
+      toast.success(`${selectedIds.length} sugjerim/e u arkivuan me sukses`);
+      setSelectedIds([]);
+    } catch (err) {
+      console.error('Failed to archive suggestions:', err);
+      toast.error('Dështoi arkivimi i sugjerimeve');
+    } finally {
+      setIsArchiving(false);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
@@ -273,11 +308,25 @@ export default function PropertyManagerSuggestionsPage() {
           <Card>
             <CardHeader>
               <div className="flex flex-col gap-4">
-                <div>
-                  <CardTitle>Pamja e Sugjerimeve</CardTitle>
-                  <CardDescription>
-                    Shqyrtoni sugjerimet e banorëve për pronat tuaja
-                  </CardDescription>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle>Pamja e Sugjerimeve</CardTitle>
+                    <CardDescription>
+                      Shqyrtoni sugjerimet e banorëve për pronat tuaja
+                    </CardDescription>
+                  </div>
+                  {selectedIds.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleArchiveSuggestions}
+                      disabled={isArchiving}
+                      className="flex items-center gap-2"
+                    >
+                      <Archive className="h-4 w-4" />
+                      Arkivo ({selectedIds.length})
+                    </Button>
+                  )}
                 </div>
                 <div className="flex flex-col gap-2">
                   <Select value={selectedProperty} onValueChange={setSelectedProperty}>
@@ -327,7 +376,18 @@ export default function PropertyManagerSuggestionsPage() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Titulli</TableHead>
+                          <TableHead>
+                            <div className="flex items-center gap-2">
+                              <Checkbox
+                                checked={selectedIds.length > 0 && selectedIds.length === suggestions.length}
+                                onCheckedChange={(checked) => {
+                                  setSelectedIds(checked ? suggestions.map((s) => s.id) : []);
+                                }}
+                                aria-label="Select all"
+                              />
+                              Titulli
+                            </div>
+                          </TableHead>
                           <TableHead>Prona</TableHead>
                           <TableHead>Banori</TableHead>
                           <TableHead>Kati</TableHead>
@@ -340,13 +400,24 @@ export default function PropertyManagerSuggestionsPage() {
                         {suggestions.map((suggestion) => (
                           <TableRow key={suggestion.id}>
                             <TableCell className="font-medium">
-                              <div className="max-w-[200px]">
-                                <div className="font-medium truncate">{suggestion.title}</div>
-                                {suggestion.description && (
-                                  <div className="text-xs text-muted-foreground truncate mt-1">
-                                    {suggestion.description}
-                                  </div>
-                                )}
+                              <div className="flex items-center gap-2 max-w-[200px]">
+                                <Checkbox
+                                  checked={selectedIds.includes(suggestion.id)}
+                                  onCheckedChange={(checked) => {
+                                    setSelectedIds((prev) => 
+                                      checked ? [...prev, suggestion.id] : prev.filter(id => id !== suggestion.id)
+                                    );
+                                  }}
+                                  aria-label={`Select suggestion #${suggestion.id}`}
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-medium truncate">{suggestion.title}</div>
+                                  {suggestion.description && (
+                                    <div className="text-xs text-muted-foreground truncate mt-1">
+                                      {suggestion.description}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </TableCell>
                             <TableCell>

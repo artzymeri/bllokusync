@@ -24,6 +24,10 @@ const PMReportsScreen = () => {
   const [selectedProperty, setSelectedProperty] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
 
+  // Selection and Archive
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [archiving, setArchiving] = useState(false);
+
   // Modals
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
@@ -111,6 +115,58 @@ const PMReportsScreen = () => {
     }
   };
 
+  const handleSelectAll = () => {
+    if (selectedIds.length === reports.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(reports.map(r => r.id));
+    }
+  };
+
+  const handleSelectReport = (id) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleArchiveReports = async () => {
+    if (selectedIds.length === 0) return;
+
+    Alert.alert(
+      'Arkivo Raportet',
+      `Jeni të sigurt që dëshironi të arkivoni ${selectedIds.length} raport(e)?`,
+      [
+        { text: 'Anulo', style: 'cancel' },
+        {
+          text: 'Arkivo',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setArchiving(true);
+              const response = await apiFetch('/api/reports/archive', {
+                method: 'POST',
+                body: JSON.stringify({ ids: selectedIds }),
+              });
+
+              if (!response.ok) {
+                throw new Error('Failed to archive reports');
+              }
+
+              Alert.alert('Sukses', `${selectedIds.length} raport(e) u arkivuan me sukses`);
+              setSelectedIds([]);
+              fetchReports();
+            } catch (error) {
+              console.error('Error archiving reports:', error);
+              Alert.alert('Gabim', 'Dështoi arkivimi i raporteve');
+            } finally {
+              setArchiving(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('sq-AL', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -150,7 +206,23 @@ const PMReportsScreen = () => {
       }}
     >
       <View style={styles.cardHeader}>
-        <Text style={styles.reportId}>#{report.id}</Text>
+        <View style={styles.cardHeaderLeft}>
+          <TouchableOpacity
+            style={styles.checkbox}
+            onPress={(e) => {
+              e.stopPropagation();
+              handleSelectReport(report.id);
+            }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <View style={[styles.checkboxInner, selectedIds.includes(report.id) && styles.checkboxChecked]}>
+              {selectedIds.includes(report.id) && (
+                <Ionicons name="checkmark" size={16} color="#fff" />
+              )}
+            </View>
+          </TouchableOpacity>
+          <Text style={styles.reportId}>#{report.id}</Text>
+        </View>
         {getStatusBadge(report.status)}
       </View>
 
@@ -208,8 +280,43 @@ const PMReportsScreen = () => {
 
   return (
     <View style={styles.container}>
-      {/* Filter Button */}
+      {/* Filter and Action Bar */}
       <View style={styles.filterContainer}>
+        {reports.length > 0 && (
+          <View style={styles.actionBar}>
+            <TouchableOpacity
+              style={styles.selectAllButton}
+              onPress={handleSelectAll}
+            >
+              <View style={[styles.checkbox, selectedIds.length === reports.length && styles.checkboxChecked]}>
+                <View style={[styles.checkboxInner, selectedIds.length === reports.length && styles.checkboxChecked]}>
+                  {selectedIds.length === reports.length && (
+                    <Ionicons name="checkmark" size={16} color="#fff" />
+                  )}
+                </View>
+              </View>
+              <Text style={styles.selectAllText}>
+                {selectedIds.length === reports.length ? 'Çzgjidh të gjitha' : 'Zgjidh të gjitha'}
+              </Text>
+            </TouchableOpacity>
+            {selectedIds.length > 0 && (
+              <TouchableOpacity
+                style={[styles.archiveButton, archiving && styles.archiveButtonDisabled]}
+                onPress={handleArchiveReports}
+                disabled={archiving}
+              >
+                {archiving ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <>
+                    <Ionicons name="archive-outline" size={18} color="#fff" />
+                    <Text style={styles.archiveButtonText}>Arkivo ({selectedIds.length})</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
         <TouchableOpacity
           style={styles.filterButton}
           onPress={() => setFilterModalVisible(true)}
@@ -449,6 +556,46 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: 'flex-end',
   },
+  actionBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    marginBottom: 12,
+  },
+  selectAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  selectAllText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#4f46e5',
+  },
+  archiveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: '#6366f1',
+  },
+  archiveButtonDisabled: {
+    opacity: 0.5,
+  },
+  archiveButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
   filterButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -489,6 +636,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+  },
+  cardHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   reportId: {
     fontSize: 14,
@@ -717,6 +869,27 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#d1d5db',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxInner: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    backgroundColor: '#6366f1',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxChecked: {
+    borderColor: '#6366f1',
+    backgroundColor: '#4f46e5',
   },
 });
 

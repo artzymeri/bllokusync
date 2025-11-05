@@ -47,6 +47,11 @@ const Suggestion = sequelize.define('Suggestion', {
     allowNull: false,
     defaultValue: 'pending'
   },
+  archived: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
   created_at: {
     type: DataTypes.DATE,
     allowNull: false,

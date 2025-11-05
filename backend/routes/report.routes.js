@@ -40,4 +40,18 @@ router.patch(
   reportController.updateReportStatus
 );
 
+router.post(
+  '/archive',
+  authenticateToken,
+  authorizeRoles('property_manager'),
+  reportController.archiveReports
+);
+
+router.post(
+  '/unarchive',
+  authenticateToken,
+  authorizeRoles('property_manager'),
+  reportController.unarchiveReports
+);
+
 module.exports = router;

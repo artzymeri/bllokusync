@@ -35,7 +35,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Building2, CheckCircle2, Clock, Loader2, MessageSquare, User, XCircle } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { AlertCircle, Building2, CheckCircle2, Clock, Loader2, MessageSquare, User, XCircle, Archive } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -84,6 +85,8 @@ export default function PropertyManagerComplaintsPage() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [isArchiving, setIsArchiving] = useState(false);
   const queryClient = useQueryClient();
 
   // Fetch complaints
@@ -192,6 +195,38 @@ export default function PropertyManagerComplaintsPage() {
     }
   };
 
+  const handleArchiveComplaints = async () => {
+    if (selectedIds.length === 0) return;
+
+    setIsArchiving(true);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/complaints/archive`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ ids: selectedIds }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to archive complaints');
+      }
+
+      // Refetch the complaints
+      setComplaints(prevComplaints => prevComplaints.filter(c => !selectedIds.includes(c.id)));
+      queryClient.invalidateQueries({ queryKey: sidebarCountsKeys.all });
+
+      toast.success(`${selectedIds.length} ankesë/a u arkivuan me sukses`);
+      setSelectedIds([]);
+    } catch (err) {
+      console.error('Failed to archive complaints:', err);
+      toast.error('Dështoi arkivimi i ankesave');
+    } finally {
+      setIsArchiving(false);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
@@ -273,11 +308,25 @@ export default function PropertyManagerComplaintsPage() {
           <Card>
             <CardHeader>
               <div className="flex flex-col gap-3 md:gap-4">
-                <div>
-                  <CardTitle className="text-base md:text-lg">Pamja e Ankesave</CardTitle>
-                  <CardDescription className="text-xs md:text-sm">
-                    Menaxhoni ankesat nga pronat tuaja
-                  </CardDescription>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-base md:text-lg">Pamja e Ankesave</CardTitle>
+                    <CardDescription className="text-xs md:text-sm">
+                      Menaxhoni ankesat nga pronat tuaja
+                    </CardDescription>
+                  </div>
+                  {selectedIds.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleArchiveComplaints}
+                      disabled={isArchiving}
+                      className="flex items-center gap-2"
+                    >
+                      <Archive className="h-4 w-4" />
+                      Arkivo ({selectedIds.length})
+                    </Button>
+                  )}
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
                   <Select value={selectedProperty} onValueChange={setSelectedProperty}>
@@ -327,6 +376,15 @@ export default function PropertyManagerComplaintsPage() {
                     <Table>
                       <TableHeader>
                         <TableRow>
+                          <TableHead>
+                            <Checkbox
+                              checked={selectedIds.length === complaints.length}
+                              onCheckedChange={(checked) => {
+                                setSelectedIds(checked ? complaints.map(c => c.id) : []);
+                              }}
+                              aria-label="Përzgjedh të gjitha"
+                            />
+                          </TableHead>
                           <TableHead>Titulli</TableHead>
                           <TableHead>Prona</TableHead>
                           <TableHead>Banori</TableHead>
@@ -339,6 +397,17 @@ export default function PropertyManagerComplaintsPage() {
                       <TableBody>
                         {complaints.map((complaint) => (
                           <TableRow key={complaint.id}>
+                            <TableCell>
+                              <Checkbox
+                                checked={selectedIds.includes(complaint.id)}
+                                onCheckedChange={(checked) => {
+                                  setSelectedIds((prev) => 
+                                    checked ? [...prev, complaint.id] : prev.filter(id => id !== complaint.id)
+                                  );
+                                }}
+                                aria-label={`Përzgjedh ankesën #${complaint.id}`}
+                              />
+                            </TableCell>
                             <TableCell className="font-medium">
                               <div className="max-w-[200px]">
                                 <div className="font-medium truncate">{complaint.title}</div>

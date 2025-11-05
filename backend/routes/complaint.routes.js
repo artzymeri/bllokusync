@@ -47,4 +47,18 @@ router.patch(
   complaintController.updateComplaintStatus
 );
 
+router.post(
+  '/archive',
+  authenticateToken,
+  authorizeRoles('property_manager'),
+  complaintController.archiveComplaints
+);
+
+router.post(
+  '/unarchive',
+  authenticateToken,
+  authorizeRoles('property_manager'),
+  complaintController.unarchiveComplaints
+);
+
 module.exports = router;

@@ -25,6 +25,10 @@ const PMComplaintsScreen = () => {
   const [selectedProperty, setSelectedProperty] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
 
+  // Selection and Archive
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [archiving, setArchiving] = useState(false);
+
   // Modals
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
@@ -114,6 +118,58 @@ const PMComplaintsScreen = () => {
     }
   };
 
+  const handleSelectAll = () => {
+    if (selectedIds.length === complaints.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(complaints.map(c => c.id));
+    }
+  };
+
+  const handleSelectComplaint = (id) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleArchiveComplaints = async () => {
+    if (selectedIds.length === 0) return;
+
+    Alert.alert(
+      'Arkivo Ankesat',
+      `Jeni të sigurt që dëshironi të arkivoni ${selectedIds.length} ankesë(a)?`,
+      [
+        { text: 'Anulo', style: 'cancel' },
+        {
+          text: 'Arkivo',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setArchiving(true);
+              const res = await apiFetch('/api/complaints/archive', {
+                method: 'POST',
+                body: JSON.stringify({ ids: selectedIds }),
+              });
+
+              if (!res.ok) {
+                throw new Error('Failed to archive complaints');
+              }
+
+              Alert.alert('Sukses', `${selectedIds.length} ankesë(a) u arkivuan me sukses`);
+              setSelectedIds([]);
+              fetchComplaints();
+            } catch (error) {
+              console.error('Error archiving complaints:', error);
+              Alert.alert('Gabim', 'Dështoi arkivimi i ankesave');
+            } finally {
+              setArchiving(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('sq-AL', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -154,7 +210,23 @@ const PMComplaintsScreen = () => {
       }}
     >
       <View style={styles.cardHeader}>
-        <Text style={styles.complaintId}>#{complaint.id}</Text>
+        <View style={styles.cardHeaderLeft}>
+          <TouchableOpacity
+            style={styles.checkbox}
+            onPress={(e) => {
+              e.stopPropagation();
+              handleSelectComplaint(complaint.id);
+            }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <View style={[styles.checkboxInner, selectedIds.includes(complaint.id) && styles.checkboxChecked]}>
+              {selectedIds.includes(complaint.id) && (
+                <Ionicons name="checkmark" size={16} color="#fff" />
+              )}
+            </View>
+          </TouchableOpacity>
+          <Text style={styles.complaintId}>#{complaint.id}</Text>
+        </View>
         {getStatusBadge(complaint.status)}
       </View>
 
@@ -216,8 +288,43 @@ const PMComplaintsScreen = () => {
 
   return (
     <View style={styles.container}>
-      {/* Filter Button */}
+      {/* Filter and Action Bar */}
       <View style={styles.filterContainer}>
+        {complaints.length > 0 && (
+          <View style={styles.actionBar}>
+            <TouchableOpacity
+              style={styles.selectAllButton}
+              onPress={handleSelectAll}
+            >
+              <View style={[styles.checkbox, selectedIds.length === complaints.length && styles.checkboxChecked]}>
+                <View style={[styles.checkboxInner, selectedIds.length === complaints.length && styles.checkboxChecked]}>
+                  {selectedIds.length === complaints.length && (
+                    <Ionicons name="checkmark" size={16} color="#fff" />
+                  )}
+                </View>
+              </View>
+              <Text style={styles.selectAllText}>
+                {selectedIds.length === complaints.length ? 'Çzgjidh të gjitha' : 'Zgjidh të gjitha'}
+              </Text>
+            </TouchableOpacity>
+            {selectedIds.length > 0 && (
+              <TouchableOpacity
+                style={[styles.archiveButton, archiving && styles.archiveButtonDisabled]}
+                onPress={handleArchiveComplaints}
+                disabled={archiving}
+              >
+                {archiving ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <>
+                    <Ionicons name="archive-outline" size={18} color="#fff" />
+                    <Text style={styles.archiveButtonText}>Arkivo ({selectedIds.length})</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
         <TouchableOpacity
           style={styles.filterButton}
           onPress={() => setFilterModalVisible(true)}
@@ -470,6 +577,45 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: 'flex-end',
   },
+  actionBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  selectAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  selectAllText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#4f46e5',
+  },
+  archiveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#10b981',
+    borderRadius: 8,
+  },
+  archiveButtonDisabled: {
+    opacity: 0.5,
+  },
+  archiveButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
   filterButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -510,6 +656,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+  },
+  cardHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   complaintId: {
     fontSize: 14,
@@ -778,6 +929,27 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#e2e8f0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxInner: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    backgroundColor: '#6366f1',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxChecked: {
+    borderColor: '#6366f1',
+    backgroundColor: '#6366f1',
   },
 });
 

@@ -99,3 +99,4 @@ export const updateReportStatus = async (id: number, data: UpdateReportStatusDat
 
   return response.json();
 };
+

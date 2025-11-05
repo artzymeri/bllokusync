@@ -47,4 +47,18 @@ router.patch(
   suggestionController.updateSuggestionStatus
 );
 
+router.post(
+  '/archive',
+  authenticateToken,
+  authorizeRoles('property_manager'),
+  suggestionController.archiveSuggestions
+);
+
+router.post(
+  '/unarchive',
+  authenticateToken,
+  authorizeRoles('property_manager'),
+  suggestionController.unarchiveSuggestions
+);
+
 module.exports = router;
