@@ -4,6 +4,7 @@ const cookieParser = require('cookie-parser');
 const { connectDB } = require('./config/database');
 const db = require('./models');
 const { runMigrations } = require('./utils/migrationRunner');
+const paymentReminderScheduler = require('./schedulers/paymentReminder.scheduler');
 const authRoutes = require('./routes/auth.routes');
 const propertyRoutes = require('./routes/property.routes');
 const userRoutes = require('./routes/user.routes');
@@ -18,6 +19,8 @@ const spendingConfigRoutes = require('./routes/spendingConfig.routes');
 const monthlyReportRoutes = require('./routes/monthlyReport.routes');
 const tenantDashboardRoutes = require('./routes/tenantDashboard.routes');
 const propertyManagerDashboardRoutes = require('./routes/propertyManagerDashboard.routes');
+const paymentReminderRoutes = require('./routes/paymentReminder.routes');
+const pushTokenRoutes = require('./routes/pushToken.routes');
 require('dotenv').config();
 
 const app = express();
@@ -61,6 +64,9 @@ const initializeDatabase = async () => {
   // Use migrations for schema changes in production
   await db.sequelize.sync({ alter: false });
   console.log('Database synced successfully');
+  
+  // Start payment reminder scheduler
+  paymentReminderScheduler.start();
 };
 
 initializeDatabase();
@@ -80,6 +86,8 @@ app.use('/api/spending-configs', spendingConfigRoutes);
 app.use('/api/monthly-reports', monthlyReportRoutes);
 app.use('/api/tenant-dashboard', tenantDashboardRoutes);
 app.use('/api/property-manager-dashboard', propertyManagerDashboardRoutes);
+app.use('/api/payment-reminders', paymentReminderRoutes);
+app.use('/api/push-tokens', pushTokenRoutes);
 
 // Test route
 app.get('/', (req, res) => {

@@ -13,6 +13,7 @@ const TenantPayment = require('./tenantPayment.model');
 const SpendingConfig = require('./spendingConfig.model');
 const PropertySpendingConfig = require('./propertySpendingConfig.model');
 const MonthlyReport = require('./monthlyReport.model');
+const PushToken = require('./pushToken.model');
 
 const db = {};
 
@@ -31,6 +32,7 @@ db.TenantPayment = TenantPayment;
 db.SpendingConfig = SpendingConfig;
 db.PropertySpendingConfig = PropertySpendingConfig;
 db.MonthlyReport = MonthlyReport;
+db.PushToken = PushToken;
 
 // Define relationships
 // Property belongs to User (property manager) - DEPRECATED, kept for backward compatibility
@@ -229,6 +231,17 @@ MonthlyReport.belongsTo(Property, {
 Property.hasMany(MonthlyReport, {
   foreignKey: 'property_id',
   as: 'monthlyReports'
+});
+
+// PushToken relationships
+PushToken.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user'
+});
+
+User.hasMany(PushToken, {
+  foreignKey: 'user_id',
+  as: 'pushTokens'
 });
 
 module.exports = db;
