@@ -6,7 +6,7 @@ const { generatePaymentRecords } = require('../utils/paymentUtils');
 // Create user directly (for admin/property_manager)
 exports.createUser = async (req, res) => {
   try {
-    const { name, surname, email, password, number, role, property_ids, expiry_date, floor_assigned, monthly_rate, apartment_label } = req.body;
+    const { name, surname, email, password, number, role, property_ids, expiry_date, floor_assigned, monthly_rate, apartment_label, notice_day } = req.body;
 
     // Validate required fields
     if (!name || !surname || !email || !password) {
@@ -78,6 +78,7 @@ exports.createUser = async (req, res) => {
       userData.floor_assigned = floor_assigned || null;
       userData.monthly_rate = monthly_rate || null;
       userData.apartment_label = apartment_label || null;
+      userData.notice_day = notice_day !== undefined ? notice_day : 1;
     }
 
     // Create user
@@ -201,7 +202,7 @@ exports.getUserById = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, surname, email, password, number, role, property_ids, expiry_date, floor_assigned, monthly_rate, apartment_label } = req.body;
+    const { name, surname, email, password, number, role, property_ids, expiry_date, floor_assigned, monthly_rate, apartment_label, notice_day } = req.body;
 
     const user = await db.User.findByPk(id);
 
@@ -277,6 +278,7 @@ exports.updateUser = async (req, res) => {
       updateData.floor_assigned = floor_assigned !== undefined ? floor_assigned : user.floor_assigned;
       updateData.monthly_rate = monthly_rate !== undefined ? monthly_rate : user.monthly_rate;
       updateData.apartment_label = apartment_label !== undefined ? apartment_label : user.apartment_label;
+      updateData.notice_day = notice_day !== undefined ? notice_day : user.notice_day;
     } else {
       // Clear floor_assigned, monthly_rate, and apartment_label if user is not tenant
       updateData.floor_assigned = null;
@@ -683,7 +685,7 @@ exports.updateTenantForPropertyManager = async (req, res) => {
   try {
     const propertyManagerId = req.user.id;
     const tenantId = parseInt(req.params.id);
-    const { name, surname, email, password, number, property_ids, floor_assigned, monthly_rate, apartment_label } = req.body;
+    const { name, surname, email, password, number, property_ids, floor_assigned, monthly_rate, apartment_label, notice_day } = req.body;
 
     // Check if user is property manager
     const propertyManager = await db.User.findByPk(propertyManagerId);
@@ -799,7 +801,8 @@ exports.updateTenantForPropertyManager = async (req, res) => {
       property_ids: property_ids !== undefined ? property_ids : tenant.property_ids,
       floor_assigned: floor_assigned !== undefined ? floor_assigned : tenant.floor_assigned,
       monthly_rate: monthly_rate !== undefined ? monthly_rate : tenant.monthly_rate,
-      apartment_label: apartment_label !== undefined ? apartment_label : tenant.apartment_label
+      apartment_label: apartment_label !== undefined ? apartment_label : tenant.apartment_label,
+      notice_day: notice_day !== undefined ? notice_day : tenant.notice_day
     };
 
     // Hash password if provided

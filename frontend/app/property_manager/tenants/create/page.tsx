@@ -34,6 +34,7 @@ export default function CreateTenantPage() {
     floor_assigned: "" as string,
     monthly_rate: "" as string,
     apartment_label: "",
+    notice_day: "" as string,
   });
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -94,6 +95,7 @@ export default function CreateTenantPage() {
         expiry_date: null,
         monthly_rate: formData.monthly_rate ? parseFloat(formData.monthly_rate) : null,
         apartment_label: formData.apartment_label || null,
+        notice_day: formData.notice_day ? parseInt(formData.notice_day) : null,
       } as CreateUserData;
 
       const result = await createMutation.mutateAsync(userData);
@@ -318,6 +320,24 @@ export default function CreateTenantPage() {
                   </div>
                   <p className="text-sm text-slate-500">
                     Vendosni qiranë mujore për banorin (opsionale)
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="notice_day">Dita e Njoftimit</Label>
+                  <Input
+                    id="notice_day"
+                    type="number"
+                    value={formData.notice_day}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, notice_day: e.target.value }))
+                    }
+                    placeholder="P.sh., 1, 15, 30..."
+                    min="1"
+                    max="31"
+                  />
+                  <p className="text-sm text-slate-500">
+                    Vendosni ditën e njoftimit për këtë banorë (opsionale)
                   </p>
                 </div>
 

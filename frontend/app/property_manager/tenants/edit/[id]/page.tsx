@@ -41,6 +41,7 @@ export default function EditTenantPage() {
     floor_assigned: "" as string,
     monthly_rate: "" as string,
     apartment_label: "",
+    notice_day: "" as string,
   });
   const [error, setError] = useState("");
   const [isRefetching, setIsRefetching] = useState(true);
@@ -104,6 +105,9 @@ export default function EditTenantPage() {
           ? tenant.monthly_rate.toString()
           : "",
         apartment_label: tenant.apartment_label || "",
+        notice_day: tenant.notice_day !== null && tenant.notice_day !== undefined
+          ? tenant.notice_day.toString()
+          : "",
       });
     }
   }, [tenantData, propertiesData, isRefetching]);
@@ -129,6 +133,7 @@ export default function EditTenantPage() {
         floor_assigned: formData.floor_assigned ? parseInt(formData.floor_assigned) : null,
         monthly_rate: formData.monthly_rate ? parseFloat(formData.monthly_rate) : null,
         apartment_label: formData.apartment_label || null,
+        notice_day: formData.notice_day ? parseInt(formData.notice_day) : null,
       };
 
       // Only include password if it's been changed
@@ -392,6 +397,24 @@ export default function EditTenantPage() {
                   />
                   <p className="text-xs text-slate-500">
                     Caktoni një shenjë për apartamentin (opsionale)
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="notice_day" className="text-xs md:text-sm">Dita e Njoftimit</Label>
+                  <Input
+                    id="notice_day"
+                    type="number"
+                    value={formData.notice_day}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, notice_day: e.target.value }))
+                    }
+                    placeholder="P.sh., 1, 15, 30..."
+                    min="0"
+                    className="text-sm md:text-base h-9 md:h-10"
+                  />
+                  <p className="text-xs text-slate-500">
+                    Vendosni ditën e njoftimit për këtë banorë (opsionale)
                   </p>
                 </div>
 

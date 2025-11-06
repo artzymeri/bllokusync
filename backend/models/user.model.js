@@ -82,6 +82,16 @@ const User = sequelize.define('User', {
     allowNull: true,
     field: 'apartment_label'
   },
+  notice_day: {
+    type: DataTypes.TINYINT.UNSIGNED,
+    allowNull: false,
+    defaultValue: 1,
+    field: 'notice_day',
+    validate: {
+      min: 1,
+      max: 31
+    }
+  },
   created_at: {
     type: DataTypes.DATE,
     allowNull: false,
