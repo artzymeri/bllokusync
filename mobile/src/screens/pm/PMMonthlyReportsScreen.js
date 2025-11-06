@@ -20,6 +20,7 @@ import {
   getMonthlyReportDetail,
 } from '../../services/monthly-report.service';
 import { getMyProperties } from '../../services/payment.service';
+import MonthlyReportPDFViewer from '../../components/MonthlyReportPDFViewer';
 
 const PMMonthlyReportsScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
@@ -34,6 +35,7 @@ const PMMonthlyReportsScreen = ({ navigation }) => {
   // Modals
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [reportDetailModalVisible, setReportDetailModalVisible] = useState(false);
+  const [pdfModalVisible, setPdfModalVisible] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
   const [reportDetailData, setReportDetailData] = useState(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
@@ -106,6 +108,17 @@ const PMMonthlyReportsScreen = ({ navigation }) => {
     } finally {
       setLoadingDetail(false);
     }
+  };
+
+  const handleViewPDF = (report) => {
+    setReportDetailModalVisible(false);
+    setSelectedReport(report);
+    setPdfModalVisible(true);
+  };
+
+  const handleClosePdfModal = () => {
+    setPdfModalVisible(false);
+    setSelectedReport(null);
   };
 
   const handleDeleteReport = (report) => {
@@ -405,16 +418,25 @@ const PMMonthlyReportsScreen = ({ navigation }) => {
 
           {!loadingDetail && selectedReport && (
             <View style={styles.modalFooter}>
-              <TouchableOpacity
-                style={styles.modalButtonDanger}
-                onPress={() => {
-                  setReportDetailModalVisible(false);
-                  handleDeleteReport(selectedReport);
-                }}
-              >
-                <Ionicons name="trash-outline" size={18} color="#fff" />
-                <Text style={styles.modalButtonDangerText}>Fshi Raportin</Text>
-              </TouchableOpacity>
+              <View style={styles.modalFooterButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonSecondary]}
+                  onPress={() => handleViewPDF(selectedReport)}
+                >
+                  <Ionicons name="download-outline" size={18} color="#4f46e5" />
+                  <Text style={styles.modalButtonSecondaryText}>Shkarko PDF</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonDanger]}
+                  onPress={() => {
+                    setReportDetailModalVisible(false);
+                    handleDeleteReport(selectedReport);
+                  }}
+                >
+                  <Ionicons name="trash-outline" size={18} color="#fff" />
+                  <Text style={styles.modalButtonDangerText}>Fshi</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           )}
         </View>
@@ -495,6 +517,15 @@ const PMMonthlyReportsScreen = ({ navigation }) => {
         >
           <Ionicons name="eye-outline" size={16} color="#4f46e5" />
           <Text style={styles.reportCardButtonText}>Shiko</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.reportCardButton}
+          onPress={() => handleViewPDF(report)}
+        >
+          <Ionicons name="download-outline" size={16} color="#10b981" />
+          <Text style={[styles.reportCardButtonText, styles.reportCardButtonTextSuccess]}>
+            PDF
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.reportCardButton}
@@ -579,6 +610,11 @@ const PMMonthlyReportsScreen = ({ navigation }) => {
       {/* Modals */}
       {renderFilterModal()}
       {renderReportDetailModal()}
+      <MonthlyReportPDFViewer
+        visible={pdfModalVisible}
+        onClose={handleClosePdfModal}
+        report={selectedReport}
+      />
     </View>
   );
 };
@@ -814,6 +850,9 @@ const styles = StyleSheet.create({
   reportCardButtonTextDanger: {
     color: '#ef4444',
   },
+  reportCardButtonTextSuccess: {
+    color: '#10b981',
+  },
   // Modal Styles
   modalOverlay: {
     flex: 1,
@@ -861,46 +900,37 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#e2e8f0',
   },
-  filterSection: {
-    marginBottom: 24,
-  },
-  filterLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#475569',
-    marginBottom: 12,
-  },
-  filterOption: {
+  modalFooterButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 12,
-    backgroundColor: '#f8fafc',
+    gap: 8,
+  },
+  modalButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
     borderRadius: 8,
-    marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  filterOptionSelected: {
-    backgroundColor: '#eff6ff',
-    borderColor: '#4f46e5',
-  },
-  filterOptionText: {
-    fontSize: 14,
-    color: '#475569',
-  },
-  filterOptionTextSelected: {
-    color: '#4f46e5',
-    fontWeight: '600',
   },
   modalButtonPrimary: {
     backgroundColor: '#4f46e5',
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: 'center',
+    borderColor: '#4f46e5',
   },
   modalButtonPrimaryText: {
     color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalButtonSecondary: {
+    backgroundColor: '#f8fafc',
+    borderColor: '#e2e8f0',
+  },
+  modalButtonSecondaryText: {
+    color: '#4f46e5',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -1044,6 +1074,38 @@ const styles = StyleSheet.create({
   metadataText: {
     fontSize: 13,
     color: '#64748b',
+  },
+  filterSection: {
+    marginBottom: 24,
+  },
+  filterLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#475569',
+    marginBottom: 12,
+  },
+  filterOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: '#f8fafc',
+    borderRadius: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  filterOptionSelected: {
+    backgroundColor: '#eff6ff',
+    borderColor: '#4f46e5',
+  },
+  filterOptionText: {
+    fontSize: 14,
+    color: '#475569',
+  },
+  filterOptionTextSelected: {
+    color: '#4f46e5',
+    fontWeight: '600',
   },
 });
 
