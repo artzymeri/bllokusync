@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../models');
 const { authenticateToken } = require('../middleware/auth.middleware');
+const pushNotificationController = require('../controllers/pushNotification.controller');
 
 /**
  * @route   POST /api/push-tokens
@@ -140,5 +141,18 @@ router.get('/my-tokens', authenticateToken, async (req, res) => {
   }
 });
 
-module.exports = router;
+/**
+ * @route   POST /api/push-tokens/test
+ * @desc    Send a test push notification to current user
+ * @access  Private (for testing only)
+ */
+router.post('/test', authenticateToken, pushNotificationController.sendTestNotification);
 
+/**
+ * @route   POST /api/push-tokens/test-payment
+ * @desc    Send a test payment confirmation notification to current user
+ * @access  Private (for testing only)
+ */
+router.post('/test-payment', authenticateToken, pushNotificationController.sendTestPaymentConfirmation);
+
+module.exports = router;

@@ -5,16 +5,38 @@ import LoginScreen from './src/screens/LoginScreen';
 import PropertyManagerScreen from './src/screens/PropertyManagerScreen';
 import TenantScreen from './src/screens/TenantScreen';
 import AuthService from './src/services/auth.service';
+import pushNotificationService from './src/services/pushNotificationService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [notificationListeners, setNotificationListeners] = useState(null);
 
   // Check if user is already logged in on app start
   useEffect(() => {
     checkAuthStatus();
   }, []);
+
+  // Setup push notifications when user is authenticated
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      setupPushNotifications();
+    } else {
+      // Cleanup listeners on logout
+      if (notificationListeners) {
+        pushNotificationService.removeNotificationListeners(notificationListeners);
+        setNotificationListeners(null);
+      }
+    }
+
+    return () => {
+      if (notificationListeners) {
+        pushNotificationService.removeNotificationListeners(notificationListeners);
+      }
+    };
+  }, [isAuthenticated, user]);
 
   const checkAuthStatus = async () => {
     try {
@@ -33,18 +55,79 @@ export default function App() {
     }
   };
 
+  const setupPushNotifications = async () => {
+    try {
+      // Register for push notifications
+      const pushToken = await pushNotificationService.registerForPushNotifications();
+      
+      if (pushToken) {
+        console.log('📱 Push token obtained:', pushToken);
+        
+        // Save token to backend
+        const authToken = await AsyncStorage.getItem('token');
+        if (authToken) {
+          await pushNotificationService.savePushToken(pushToken, authToken);
+          console.log('✅ Push notifications registered successfully');
+        }
+      } else {
+        console.log('⚠️ Could not obtain push token (physical device required)');
+      }
+
+      // Setup notification listeners
+      const listeners = pushNotificationService.setupNotificationListeners(
+        (notification) => {
+          // Handle notification received while app is open
+          console.log('🔔 Notification received:', notification.request.content);
+          
+          // You can show an in-app alert or update UI here
+          const { title, body, data } = notification.request.content;
+          console.log('Title:', title);
+          console.log('Body:', body);
+          console.log('Data:', data);
+        },
+        (response) => {
+          // Handle notification tap
+          console.log('👆 Notification tapped:', response.notification.request.content);
+          
+          const data = response.notification.request.content.data;
+          
+          // Navigate based on notification type
+          if (data.type === 'payment_confirmation') {
+            console.log('Navigate to payments screen');
+            // TODO: Add navigation to payments screen when navigation is implemented
+          } else if (data.type === 'payment_reminder') {
+            console.log('Navigate to payments screen');
+          } else if (data.type === 'status_update') {
+            console.log('Navigate to complaints/reports screen');
+          }
+        }
+      );
+
+      setNotificationListeners(listeners);
+    } catch (error) {
+      console.error('❌ Push notification setup failed:', error);
+    }
+  };
+
   const handleLoginSuccess = (userData) => {
     setUser(userData);
     setIsAuthenticated(true);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      // Remove push token from backend
+      const authToken = await AsyncStorage.getItem('token');
+      if (authToken) {
+        await pushNotificationService.removePushToken(authToken);
+        console.log('🔕 Push token removed');
+      }
+    } catch (error) {
+      console.error('Error removing push token:', error);
+    }
+    
     setUser(null);
     setIsAuthenticated(false);
-  };
-
-  const handleUpdateUser = (updatedUserData) => {
-    setUser(updatedUserData);
   };
 
   // Show loading spinner while checking auth

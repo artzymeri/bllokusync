@@ -5,17 +5,54 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "icon": "./assets/app_logo.png",
     "splash": {
+      "image": "./assets/app_logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "notification": {
+      "icon": "./assets/app_logo.png",
+      "color": "#3b82f6",
+      "androidMode": "default",
+      "androidCollapsedTitle": "BllokuSync"
+    },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.bllokusync.mobile"
+      "bundleIdentifier": "com.bllokusync.mobile",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "remote-notification"
+        ],
+        "NSUserNotificationsUsageDescription": "BllokuSync needs notification permissions to send you payment confirmations, payment reminders, and important updates about your property."
+      }
     },
     "android": {
-      "package": "com.bllokusync.mobile"
+      "package": "com.bllokusync.mobile",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/app_logo.png",
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": [
+        "NOTIFICATIONS",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE"
+      ],
+      "useNextNotificationsApi": true
     },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/app_logo.png",
+          "color": "#3b82f6",
+          "sounds": [
+            "./assets/notification.wav"
+          ],
+          "defaultChannel": "default"
+        }
+      ]
+    ],
     "web": {}
   }
 }

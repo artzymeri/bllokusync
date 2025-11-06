@@ -41,6 +41,9 @@ class PushNotificationService {
           body: body,
           data: data,
           priority: 'high',
+          channelId: data.type === 'payment_confirmation' ? 'payment_confirmations' : 
+                     data.type === 'payment_reminder' ? 'payment_reminders' : 'default',
+          badge: 1,
         });
       }
 

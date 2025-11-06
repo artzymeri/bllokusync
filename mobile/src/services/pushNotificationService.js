@@ -26,7 +26,32 @@ class PushNotificationService {
         name: 'default',
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#667eea',
+        lightColor: '#3b82f6',
+        sound: 'default',
+        enableVibrate: true,
+        enableLights: true,
+        showBadge: true,
+      });
+      
+      // Create additional channels for different notification types
+      await Notifications.setNotificationChannelAsync('payment_confirmations', {
+        name: 'Payment Confirmations',
+        importance: Notifications.AndroidImportance.HIGH,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#10b981',
+        sound: 'default',
+        enableVibrate: true,
+        showBadge: true,
+      });
+      
+      await Notifications.setNotificationChannelAsync('payment_reminders', {
+        name: 'Payment Reminders',
+        importance: Notifications.AndroidImportance.HIGH,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#f59e0b',
+        sound: 'default',
+        enableVibrate: true,
+        showBadge: true,
       });
     }
 
@@ -35,7 +60,14 @@ class PushNotificationService {
       let finalStatus = existingStatus;
       
       if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync();
+        const { status } = await Notifications.requestPermissionsAsync({
+          ios: {
+            allowAlert: true,
+            allowBadge: true,
+            allowSound: true,
+            allowAnnouncements: true,
+          },
+        });
         finalStatus = status;
       }
       
@@ -44,7 +76,9 @@ class PushNotificationService {
         return null;
       }
       
-      token = (await Notifications.getExpoPushTokenAsync()).data;
+      token = (await Notifications.getExpoPushTokenAsync({
+        projectId: 'your-project-id' // Optional: Add when you create EAS project
+      })).data;
       console.log('Push token obtained:', token);
     } else {
       console.log('Must use physical device for Push Notifications');
@@ -191,4 +225,3 @@ class PushNotificationService {
 }
 
 export default new PushNotificationService();
-
