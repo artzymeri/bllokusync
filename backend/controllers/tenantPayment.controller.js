@@ -707,19 +707,24 @@ exports.ensurePaymentRecords = async (req, res) => {
 
       for (const tenantId of tenant_ids) {
         try {
-          // Check if this tenant has already paid for this month
+          // Check if ANY payment record already exists for this tenant/property/month
           const existingPayment = await db.TenantPayment.findOne({
             where: {
               tenant_id: tenantId,
               property_id: parseInt(property_id),
-              payment_month: monthStr,
-              status: 'paid'
+              payment_month: monthStr
             }
           });
 
-          // Skip if already paid for this month
+          // If payment record exists (regardless of status), just return it and skip creation
           if (existingPayment) {
-            console.log('Tenant', tenantId, 'already paid for', monthStr, '- skipping');
+            console.log('Tenant', tenantId, 'already has payment record for', monthStr, 'with status:', existingPayment.status);
+            createdPayments.push({
+              id: existingPayment.id,
+              tenant_id: tenantId,
+              month: monthIndex,
+              created: false
+            });
             continue;
           }
 
@@ -754,30 +759,50 @@ exports.ensurePaymentRecords = async (req, res) => {
 
           console.log('Creating payment record for tenant', tenantId, 'amount:', tenant.monthly_rate, 'month:', monthStr);
 
-          // Create or find payment record
-          const [payment, created] = await db.TenantPayment.findOrCreate({
-            where: {
-              tenant_id: tenantId,
-              property_id: parseInt(property_id),
-              payment_month: monthStr
-            },
-            defaults: {
-              amount: tenant.monthly_rate,
-              status: 'pending'
-            }
+          // Create payment record (we already checked it doesn't exist)
+          const payment = await db.TenantPayment.create({
+            tenant_id: tenantId,
+            property_id: parseInt(property_id),
+            payment_month: monthStr,
+            amount: tenant.monthly_rate,
+            status: 'pending'
           });
 
-          console.log('Payment record', created ? 'CREATED' : 'FOUND', 'with ID:', payment.id);
+          console.log('Payment record CREATED with ID:', payment.id);
 
           createdPayments.push({
             id: payment.id,
             tenant_id: tenantId,
             month: monthIndex,
-            created: created
+            created: true
           });
         } catch (err) {
           console.error('Error processing tenant', tenantId, 'for month', monthIndex, ':', err);
-          errors.push({ tenant_id: tenantId, month: monthIndex, error: err.message });
+          // Check if it's a duplicate key error
+          if (err.name === 'SequelizeUniqueConstraintError') {
+            // If duplicate, fetch the existing payment and return it
+            try {
+              const existingPayment = await db.TenantPayment.findOne({
+                where: {
+                  tenant_id: tenantId,
+                  property_id: parseInt(property_id),
+                  payment_month: monthStr
+                }
+              });
+              if (existingPayment) {
+                createdPayments.push({
+                  id: existingPayment.id,
+                  tenant_id: tenantId,
+                  month: monthIndex,
+                  created: false
+                });
+              }
+            } catch (fetchErr) {
+              errors.push({ tenant_id: tenantId, month: monthIndex, error: 'Duplicate payment record' });
+            }
+          } else {
+            errors.push({ tenant_id: tenantId, month: monthIndex, error: err.message });
+          }
         }
       }
     }
@@ -877,6 +902,61 @@ exports.updatePaymentDate = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error updating payment date',
+      error: error.message
+    });
+  }
+};
+
+// Delete payment record
+exports.deletePayment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const managerId = req.user.id;
+
+    const payment = await db.TenantPayment.findByPk(id, {
+      include: [{
+        model: db.Property,
+        as: 'property'
+      }]
+    });
+
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Payment not found'
+      });
+    }
+
+    // Check if user manages this property
+    const manager = await db.User.findByPk(managerId, {
+      include: [{
+        model: db.Property,
+        as: 'managedPropertiesMany',
+        where: { id: payment.property_id },
+        through: { attributes: [] },
+        required: false
+      }]
+    });
+
+    if (!manager || !manager.managedPropertiesMany || manager.managedPropertiesMany.length === 0) {
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have permission to delete this payment'
+      });
+    }
+
+    // Delete the payment
+    await payment.destroy();
+
+    res.json({
+      success: true,
+      message: 'Payment deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete payment error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting payment',
       error: error.message
     });
   }

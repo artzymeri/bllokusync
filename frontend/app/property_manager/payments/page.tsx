@@ -52,12 +52,13 @@ import {
   bulkUpdatePayments,
   ensurePaymentRecords,
   updatePaymentDate,
+  deletePayment,
   TenantPayment,
   PaymentStatistics,
   EnsurePaymentRecordsResult,
 } from "@/lib/tenant-payment-api";
 import { useProperties } from "@/hooks/useProperties";
-import { Calendar as CalendarIcon, Euro, AlertCircle, CheckCircle, Clock, Plus, Users, Edit } from "lucide-react";
+import { Calendar as CalendarIcon, Euro, AlertCircle, CheckCircle, Clock, Plus, Users, Edit, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { sq } from "date-fns/locale";
 import { cn, formatShortDate } from "@/lib/utils";
@@ -112,12 +113,44 @@ export default function PaymentsPage() {
         filters.status = selectedStatus;
       }
 
+      // Fetch payments and statistics
       const [paymentsData, statsData] = await Promise.all([
         getPropertyManagerPayments(filters),
         getPaymentStatistics(
             selectedProperty !== "all" ? { property_id: parseInt(selectedProperty), year: selectedYear } : { year: selectedYear }
         ),
       ]);
+
+      // DEBUG: Log the payments data to see if duplicates are coming from API
+      console.log('🔍 DEBUG: Payments received from API:', paymentsData.length);
+      
+      // Check for duplicates in the API response
+      const paymentsByKey = new Map();
+      const duplicatesInResponse: any[] = [];
+      
+      paymentsData.forEach(payment => {
+        const key = `${payment.tenant_id}-${payment.property_id}-${payment.payment_month}`;
+        if (paymentsByKey.has(key)) {
+          duplicatesInResponse.push({
+            key,
+            existing: paymentsByKey.get(key),
+            duplicate: payment
+          });
+        } else {
+          paymentsByKey.set(key, payment);
+        }
+      });
+      
+      if (duplicatesInResponse.length > 0) {
+        console.error('❌ DUPLICATES FOUND IN API RESPONSE:', duplicatesInResponse);
+        duplicatesInResponse.forEach(dup => {
+          console.error(`  Key: ${dup.key}`);
+          console.error(`    Existing ID: ${dup.existing.id}, Status: ${dup.existing.status}`);
+          console.error(`    Duplicate ID: ${dup.duplicate.id}, Status: ${dup.duplicate.status}`);
+        });
+      } else {
+        console.log('✅ No duplicates in API response');
+      }
 
       setPayments(paymentsData);
       setStatistics(statsData);
@@ -333,6 +366,21 @@ export default function PaymentsPage() {
     }
   };
 
+  const handleDeletePayment = async (paymentId: number) => {
+    if (!confirm("A jeni të sigurt që dëshironi të fshini këtë regjistrim pagese?")) {
+      return;
+    }
+
+    try {
+      await deletePayment(paymentId);
+      toast.success("Regjistrimi i pagesës u fshi");
+      fetchData();
+    } catch (error) {
+      console.error("Error deleting payment:", error);
+      toast.error("Dështoi fshirja e regjistrimit të pagesës");
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "paid":
@@ -396,6 +444,38 @@ export default function PaymentsPage() {
       const monthIndex = month - 1; // Convert to 0-indexed (0-11)
       grouped[monthIndex].push(payment);
     });
+
+    // DEBUG: Log October payments to see if duplicates are created during grouping
+    if (grouped[9] && grouped[9].length > 0) {
+      console.log('🔍 DEBUG: October 2025 payments after grouping:', grouped[9].length);
+      
+      // Check for duplicate IDs
+      const ids = grouped[9].map(p => p.id);
+      const uniqueIds = new Set(ids);
+      
+      if (ids.length !== uniqueIds.size) {
+        console.error('❌ DUPLICATE IDs FOUND IN OCTOBER GROUPING!');
+        console.error('Total payments:', ids.length, 'Unique IDs:', uniqueIds.size);
+        
+        // Find which IDs are duplicated
+        const idCounts = new Map();
+        ids.forEach(id => {
+          idCounts.set(id, (idCounts.get(id) || 0) + 1);
+        });
+        
+        idCounts.forEach((count, id) => {
+          if (count > 1) {
+            console.error(`  ID ${id} appears ${count} times`);
+            const dupes = grouped[9].filter(p => p.id === id);
+            dupes.forEach((p, idx) => {
+              console.error(`    ${idx + 1}. Tenant: ${p.tenant?.name} ${p.tenant?.surname}, Status: ${p.status}`);
+            });
+          }
+        });
+      } else {
+        console.log('✅ No duplicate IDs in October grouping');
+      }
+    }
 
     return grouped;
   };
@@ -988,6 +1068,15 @@ export default function PaymentsPage() {
                                                             <Edit className="w-4 h-4 mr-2" />
                                                             Ndrysho Datën e Pagesës
                                                           </Button>
+                                                          <Button
+                                                              size="sm"
+                                                              variant="outline"
+                                                              className="w-full text-xs h-9"
+                                                              onClick={() => handleDeletePayment(payment.id)}
+                                                          >
+                                                            <Trash2 className="w-4 h-4 mr-2" />
+                                                            Fshi Pagesën
+                                                          </Button>
                                                         </div>
                                                       </div>
                                                     </DialogContent>
@@ -1146,6 +1235,15 @@ export default function PaymentsPage() {
                                                                 </DialogFooter>
                                                               </DialogContent>
                                                             </Dialog>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                                onClick={() => handleDeletePayment(payment.id)}
+                                                            >
+                                                              <Trash2 className="w-4 h-4 mr-1" />
+                                                              Fshi
+                                                            </Button>
                                                           </div>
                                                         </TableCell>
                                                       </TableRow>
@@ -1173,4 +1271,3 @@ export default function PaymentsPage() {
       </ProtectedRoute>
   );
 }
-

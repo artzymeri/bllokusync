@@ -235,3 +235,15 @@ export async function updatePaymentDate(
   const data = await response.json();
   return data.data;
 }
+
+// Delete payment record
+export async function deletePayment(paymentId: number): Promise<void> {
+  const response = await apiFetch(`/api/tenant-payments/${paymentId}`, {
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to delete payment');
+  }
+}

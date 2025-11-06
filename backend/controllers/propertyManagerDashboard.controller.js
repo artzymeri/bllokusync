@@ -22,16 +22,24 @@ exports.getPropertyManagerDashboardData = async (req, res) => {
       }
     });
 
-    // Get all tenants across managed properties
+    // Get all tenants across managed properties using JSON_CONTAINS (same approach as tenants list)
+    // Build where clause using raw SQL for JSON_CONTAINS (MySQL compatible)
+    const jsonContainsConditions = propertyIds.map(propId =>
+      sequelize.literal(`JSON_CONTAINS(property_ids, '${propId}', '$')`)
+    );
+
     const allTenants = await User.findAll({
       where: {
         role: 'tenant',
-        property_ids: {
-          [Op.overlap]: propertyIds
-        }
+        [Op.or]: jsonContainsConditions
       },
       attributes: ['id', 'name', 'surname', 'email', 'number', 'property_ids']
     });
+
+    // Debug logging for tenant count
+    console.log('[PM Dashboard] Property IDs:', propertyIds);
+    console.log('[PM Dashboard] Total tenants found:', allTenants.length);
+    console.log('[PM Dashboard] Tenants:', allTenants.map(t => ({ id: t.id, name: `${t.name} ${t.surname}`, property_ids: t.property_ids })));
 
     // Calculate total apartments and occupied apartments
     let totalApartments = 0;
@@ -147,10 +155,24 @@ exports.getPropertyManagerDashboardData = async (req, res) => {
     });
 
     const paidCount = currentMonthPayments.filter(p => p.status === 'paid').length;
-    const unpaidCount = currentMonthPayments.filter(p => p.status === 'unpaid').length;
+    const unpaidCount = currentMonthPayments.length - paidCount; // Count all non-paid payments
     const totalRevenue = currentMonthPayments
       .filter(p => p.status === 'paid')
       .reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+
+    // Debug logging for payment data
+    console.log('[PM Dashboard] First day of month:', firstDayOfMonth);
+    console.log('[PM Dashboard] Last day of month:', lastDayOfMonth);
+    console.log('[PM Dashboard] Total payments this month:', currentMonthPayments.length);
+    console.log('[PM Dashboard] Paid:', paidCount, 'Unpaid:', unpaidCount);
+    console.log('[PM Dashboard] Payment details:', currentMonthPayments.map(p => ({ 
+      id: p.id, 
+      status: p.status, 
+      amount: p.amount, 
+      payment_month: p.payment_month,
+      property_id: p.property_id,
+      tenant_id: p.tenant_id
+    })));
 
     // Get overdue payments
     const overduePayments = await TenantPayment.findAll({
@@ -645,7 +667,7 @@ exports.getPropertyManagerPayments = async (req, res) => {
     });
 
     const paidCount = currentMonthPayments.filter(p => p.status === 'paid').length;
-    const unpaidCount = currentMonthPayments.filter(p => p.status !== 'paid').length;
+    const unpaidCount = currentMonthPayments.length - paidCount; // Count all non-paid payments
     const totalRevenue = currentMonthPayments
       .filter(p => p.status === 'paid')
       .reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);

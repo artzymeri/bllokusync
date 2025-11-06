@@ -39,6 +39,37 @@ async function markMigrationAsExecuted(filename) {
 }
 
 /**
+ * Executes a SQL migration file
+ */
+async function executeSqlMigration(filePath, filename) {
+  const sql = fs.readFileSync(filePath, 'utf8');
+
+  // Split by semicolons and execute each statement separately
+  const statements = sql
+    .split(';')
+    .map(stmt => stmt.trim())
+    .filter(stmt => stmt.length > 0);
+
+  for (const statement of statements) {
+    await sequelize.query(statement);
+  }
+}
+
+/**
+ * Executes a JavaScript migration file
+ */
+async function executeJsMigration(filePath, filename) {
+  const migration = require(filePath);
+  
+  if (typeof migration.up !== 'function') {
+    throw new Error(`Migration ${filename} does not export an 'up' function`);
+  }
+
+  // Execute the 'up' function with queryInterface and Sequelize
+  await migration.up(sequelize.getQueryInterface(), sequelize.Sequelize);
+}
+
+/**
  * Runs all pending migrations
  */
 async function runMigrations() {
@@ -51,10 +82,10 @@ async function runMigrations() {
     // Get list of executed migrations
     const executedMigrations = await getExecutedMigrations();
 
-    // Get all migration files from the migrations directory
+    // Get all migration files from the migrations directory (both .sql and .js)
     const migrationsDir = path.join(__dirname, '../migrations');
     const allMigrationFiles = fs.readdirSync(migrationsDir)
-      .filter(file => file.endsWith('.sql'))
+      .filter(file => file.endsWith('.sql') || file.endsWith('.js'))
       .sort(); // Execute in alphabetical order
 
     // Find pending migrations
@@ -79,16 +110,12 @@ async function runMigrations() {
         console.log(`  ⏳ Running: ${filename}`);
 
         const filePath = path.join(migrationsDir, filename);
-        const sql = fs.readFileSync(filePath, 'utf8');
-
-        // Split by semicolons and execute each statement separately
-        const statements = sql
-          .split(';')
-          .map(stmt => stmt.trim())
-          .filter(stmt => stmt.length > 0);
-
-        for (const statement of statements) {
-          await sequelize.query(statement);
+        
+        // Execute based on file type
+        if (filename.endsWith('.sql')) {
+          await executeSqlMigration(filePath, filename);
+        } else if (filename.endsWith('.js')) {
+          await executeJsMigration(filePath, filename);
         }
 
         // Mark as executed only if successful
@@ -98,22 +125,27 @@ async function runMigrations() {
       } catch (error) {
         console.error(`  ✗ Failed: ${filename}`);
         console.error(`  Error: ${error.message}`);
-        failCount++;
-        failedMigrations.push({ filename, error: error.message });
 
         // Check if it's a "safe" error (already exists)
         const safeErrors = [
           'Duplicate column name',
           'Duplicate key name',
           'Duplicate index name',
-          'already exists'
+          'already exists',
+          'Duplicate column'
         ];
 
-        const isSafeError = safeErrors.some(msg => error.message.includes(msg));
+        const isSafeError = safeErrors.some(msg => 
+          error.message && error.message.includes(msg)
+        );
 
         if (isSafeError) {
           console.log(`  ℹ️  Migration already applied, marking as executed.`);
           await markMigrationAsExecuted(filename);
+          successCount++;
+        } else {
+          failCount++;
+          failedMigrations.push({ filename, error: error.message });
         }
       }
     }

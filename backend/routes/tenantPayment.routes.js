@@ -27,15 +27,7 @@ router.get(
   tenantPaymentController.getPaymentStatistics
 );
 
-// Update payment status
-router.patch(
-  '/:id',
-  verifyToken,
-  authorizeRoles('property_manager'),
-  tenantPaymentController.updatePaymentStatus
-);
-
-// Bulk update payment statuses
+// Bulk update payment statuses (must come before /:id to avoid matching)
 router.patch(
   '/',
   verifyToken,
@@ -59,12 +51,28 @@ router.post(
   tenantPaymentController.ensurePaymentRecords
 );
 
-// Update payment date
+// Update payment date (specific route must come before generic /:id)
 router.patch(
   '/:id/payment-date',
   verifyToken,
   authorizeRoles('property_manager'),
   tenantPaymentController.updatePaymentDate
+);
+
+// Update payment status
+router.patch(
+  '/:id',
+  verifyToken,
+  authorizeRoles('property_manager'),
+  tenantPaymentController.updatePaymentStatus
+);
+
+// Delete payment record
+router.delete(
+  '/:id',
+  verifyToken,
+  authorizeRoles('property_manager'),
+  tenantPaymentController.deletePayment
 );
 
 module.exports = router;

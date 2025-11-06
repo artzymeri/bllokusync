@@ -34,6 +34,12 @@ const PMDashboardScreen = ({ navigation, user }) => {
       const data = await response.json();
       
       if (data.success) {
+        // Debug logging to see what data we're receiving
+        console.log('[PMDashboard] Overview data:', JSON.stringify(data.data.overview, null, 2));
+        console.log('[PMDashboard] Payments data:', JSON.stringify(data.data.payments.currentMonth, null, 2));
+        console.log('[PMDashboard] Total tenants:', data.data.overview.totalTenants);
+        console.log('[PMDashboard] Unpaid payments:', data.data.payments.currentMonth.unpaid);
+        
         setDashboardData(data.data);
       } else {
         throw new Error(data.message || 'Failed to load dashboard data');
@@ -109,14 +115,6 @@ const PMDashboardScreen = ({ navigation, user }) => {
           <Text style={styles.statValue}>{overview.totalTenants}</Text>
           <Text style={styles.statLabel}>Banorët</Text>
         </View>
-
-        <View style={styles.statBox}>
-          <View style={styles.statIconWrapper}>
-            <Ionicons name="home" size={24} color="#8b5cf6" />
-          </View>
-          <Text style={styles.statValue}>{overview.totalApartments}</Text>
-          <Text style={styles.statLabel}>Apartamentet</Text>
-        </View>
       </View>
 
       {/* Revenue Card */}
@@ -182,7 +180,7 @@ const PMDashboardScreen = ({ navigation, user }) => {
             >
               <View style={styles.alertContent}>
                 <Ionicons name="construct" size={20} color="#f59e0b" />
-                <Text style={styles.alertText}>Raporte në pritje</Text>
+                <Text style={styles.alertText}>Raportet në pritje</Text>
               </View>
               <View style={styles.alertBadge}>
                 <Text style={styles.alertBadgeText}>{reports.statistics.pending}</Text>
@@ -197,7 +195,7 @@ const PMDashboardScreen = ({ navigation, user }) => {
             >
               <View style={styles.alertContent}>
                 <Ionicons name="chatbox-ellipses" size={20} color="#f59e0b" />
-                <Text style={styles.alertText}>Ankesa të reja</Text>
+                <Text style={styles.alertText}>Ankesat në pritje</Text>
               </View>
               <View style={styles.alertBadge}>
                 <Text style={styles.alertBadgeText}>{complaints.statistics.pending}</Text>
@@ -243,10 +241,18 @@ const PMDashboardScreen = ({ navigation, user }) => {
 
           <TouchableOpacity 
             style={styles.actionButton}
+            onPress={() => navigation?.navigate && navigation.navigate('monthly-reports')}
+          >
+            <Ionicons name="bar-chart-outline" size={28} color="#4f46e5" />
+            <Text style={styles.actionText}>Raportet Mujore</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.actionButton}
             onPress={() => navigation?.navigate && navigation.navigate('reports')}
           >
-            <Ionicons name="construct-outline" size={28} color="#4f46e5" />
-            <Text style={styles.actionText}>Mirëmbajtja</Text>
+            <Ionicons name="document-text-outline" size={28} color="#4f46e5" />
+            <Text style={styles.actionText}>Raportet</Text>
             {reports.statistics.pending > 0 && (
               <View style={styles.actionBadge}>
                 <Text style={styles.actionBadgeText}>{reports.statistics.pending}</Text>
@@ -273,14 +279,6 @@ const PMDashboardScreen = ({ navigation, user }) => {
           >
             <Ionicons name="bulb-outline" size={28} color="#4f46e5" />
             <Text style={styles.actionText}>Sugjerimet</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.actionButton}
-            onPress={() => navigation?.navigate && navigation.navigate('monthly-reports')}
-          >
-            <Ionicons name="bar-chart-outline" size={28} color="#4f46e5" />
-            <Text style={styles.actionText}>Raportet</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
