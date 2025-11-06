@@ -84,6 +84,24 @@ class PushNotificationService {
   }
 
   /**
+   * Send payment confirmation notification
+   */
+  async sendPaymentConfirmation(userId, monthName, amount, propertyName, paymentDate) {
+    return await this.sendToUsers(
+      [userId],
+      '✅ Pagesa e Konfirmuar',
+      `Faleminderit! Pagesa juaj për ${monthName} (€${amount}) është pranuar dhe konfirmuar.`,
+      {
+        type: 'payment_confirmation',
+        month: monthName,
+        amount: amount,
+        property: propertyName,
+        paymentDate: paymentDate
+      }
+    );
+  }
+
+  /**
    * Send complaint/report status update notification
    */
   async sendStatusUpdate(userId, type, status, title) {
@@ -185,4 +203,3 @@ class PushNotificationService {
 }
 
 module.exports = new PushNotificationService();
-

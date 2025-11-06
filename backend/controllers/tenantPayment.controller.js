@@ -1,6 +1,7 @@
 const db = require('../models');
 const { Op, Sequelize } = require('sequelize');
 const emailService = require('../services/email.service');
+const pushNotificationService = require('../services/pushNotification.service');
 
 // Get payments for a specific tenant
 exports.getTenantPayments = async (req, res) => {
@@ -399,6 +400,21 @@ exports.updatePaymentStatus = async (req, res) => {
         // Log email error but don't fail the request
         console.error('Failed to send payment confirmation email:', emailError.message);
       }
+
+      // Send push notification
+      try {
+        await pushNotificationService.sendPaymentConfirmation(
+          updatedPayment.tenant.id,
+          updatedPayment.payment_month,
+          updatedPayment.amount,
+          updatedPayment.property.name,
+          updatedPayment.payment_date
+        );
+        console.log(`✅ Payment confirmation push notification sent for payment ID: ${id}`);
+      } catch (pushError) {
+        // Log push notification error but don't fail the request
+        console.error('Failed to send payment confirmation push notification:', pushError.message);
+      }
     }
 
     res.json({
@@ -535,6 +551,41 @@ exports.bulkUpdatePayments = async (req, res) => {
         } catch (emailError) {
           // Log email error but don't fail the request
           console.error(`Failed to send payment confirmation email to ${tenant.email}:`, emailError.message);
+        }
+
+        // Send push notification for payment confirmation
+        try {
+          // For multiple payments, send a summary notification
+          if (tenantPayments.length === 1) {
+            await pushNotificationService.sendPaymentConfirmation(
+              tenant.id,
+              tenantPayments[0].payment_month,
+              tenantPayments[0].amount,
+              property.name,
+              tenantPayments[0].payment_date
+            );
+            console.log(`✅ Payment confirmation push notification sent to tenant ${tenant.id}`);
+          } else {
+            // Send a summary notification for multiple payments
+            const totalAmount = tenantPayments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+            const months = tenantPayments.map(p => p.payment_month).join(', ');
+            await pushNotificationService.sendToUsers(
+              [tenant.id],
+              '✅ Pagesa e Konfirmuar',
+              `Faleminderit! ${tenantPayments.length} pagesa tuaja (€${totalAmount.toFixed(2)}) janë pranuar dhe konfirmuar.`,
+              {
+                type: 'payment_confirmation',
+                count: tenantPayments.length,
+                totalAmount: totalAmount,
+                property: property.name,
+                months: months
+              }
+            );
+            console.log(`✅ Multiple payments confirmation push notification sent to tenant ${tenant.id} for ${tenantPayments.length} payments`);
+          }
+        } catch (pushError) {
+          // Log push notification error but don't fail the request
+          console.error(`Failed to send payment confirmation push notification to tenant ${tenant.id}:`, pushError.message);
         }
       }
     }
