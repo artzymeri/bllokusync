@@ -114,6 +114,10 @@ export default function App() {
     setIsAuthenticated(true);
   };
 
+  const handleUpdateUser = (updatedUserData) => {
+    setUser(updatedUserData);
+  };
+
   const handleLogout = async () => {
     try {
       // Remove push token from backend

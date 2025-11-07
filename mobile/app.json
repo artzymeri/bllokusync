@@ -45,14 +45,15 @@
         "expo-notifications",
         {
           "icon": "./assets/app_logo.png",
-          "color": "#3b82f6",
-          "sounds": [
-            "./assets/notification.wav"
-          ],
-          "defaultChannel": "default"
+          "color": "#3b82f6"
         }
       ]
     ],
-    "web": {}
+    "web": {},
+    "extra": {
+      "eas": {
+        "projectId": "b313d14b-4fba-4d7e-8e2e-16be9f6698a1"
+      }
+    }
   }
 }
