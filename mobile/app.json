@@ -38,7 +38,9 @@
         "RECEIVE_BOOT_COMPLETED",
         "VIBRATE"
       ],
-      "useNextNotificationsApi": true
+      "useNextNotificationsApi": true,
+      "compileSdkVersion": 35,
+      "targetSdkVersion": 35
     },
     "plugins": [
       [
