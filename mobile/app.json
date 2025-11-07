@@ -21,14 +21,13 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.bllokusync.mobile",
       "infoPlist": {
-        "UIBackgroundModes": [
-          "remote-notification"
-        ],
+        "UIBackgroundModes": ["remote-notification"],
         "NSUserNotificationsUsageDescription": "BllokuSync needs notification permissions to send you payment confirmations, payment reminders, and important updates about your property."
       }
     },
     "android": {
       "package": "com.bllokusync.mobile",
+      "versionCode": 11,
       "adaptiveIcon": {
         "foregroundImage": "./assets/app_logo.png",
         "backgroundColor": "#ffffff"
