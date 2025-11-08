@@ -27,7 +27,7 @@
     },
     "android": {
       "package": "com.bllokusync.mobile",
-      "versionCode": 11,
+      "versionCode": 12,
       "adaptiveIcon": {
         "foregroundImage": "./assets/app_logo.png",
         "backgroundColor": "#ffffff"
@@ -39,7 +39,8 @@
       ],
       "useNextNotificationsApi": true,
       "compileSdkVersion": 35,
-      "targetSdkVersion": 35
+      "targetSdkVersion": 35,
+      "buildToolsVersion": "35.0.0"
     },
     "plugins": [
       [
